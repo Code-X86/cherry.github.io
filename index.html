@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cherry — Rust-Powered Programming Language</title>
+  <meta name="description" content="Cherry is a fast, simple, Rust-powered programming language built for quick scripting, native packages, and clean parsing." />
+
+  <style>
+    :root {
+      --bg: #08070a;
+      --panel: #111016;
+      --panel-2: #17141d;
+      --text: #f7f2f5;
+      --muted: #aaa2ad;
+      --cherry: #ff2f5f;
+      --cherry-dark: #b80f36;
+      --green: #42d392;
+      --line: rgba(255, 255, 255, 0.08);
+      --shadow: 0 30px 80px rgba(255, 47, 95, 0.12);
+      --radius: 24px;
+      --max: 1120px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255, 47, 95, 0.16), transparent 28rem),
+        radial-gradient(circle at 80% 20%, rgba(66, 211, 146, 0.10), transparent 26rem),
+        linear-gradient(180deg, #08070a 0%, #0d0b10 45%, #08070a 100%);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(100% - 32px, var(--max));
+      margin: 0 auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(8, 7, 10, 0.72);
+      border-bottom: 1px solid var(--line);
+    }
+
+    nav {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      font-size: 1.25rem;
+    }
+
+    .brand img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      transition: 0.2s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .button.primary {
+      border: none;
+      background: linear-gradient(135deg, var(--cherry), var(--cherry-dark));
+      box-shadow: 0 12px 36px rgba(255, 47, 95, 0.3);
+    }
+
+    .hero {
+      padding: 96px 0 56px;
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 47, 95, 0.10);
+      border: 1px solid rgba(255, 47, 95, 0.24);
+      color: #ffd3de;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 18px var(--green);
+    }
+
+    h1 {
+      font-size: clamp(3rem, 7vw, 6.4rem);
+      line-height: 0.92;
+      letter-spacing: -0.08em;
+      margin-bottom: 24px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #fff, #ff8ca7 45%, var(--cherry));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      color: var(--muted);
+      max-width: 650px;
+      font-size: 1.15rem;
+      margin-bottom: 30px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 620px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--line);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.05rem;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .hero-card {
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .logo-panel {
+      display: grid;
+      place-items: center;
+      padding: 42px;
+      min-height: 280px;
+      background:
+        radial-gradient(circle at center, rgba(255, 47, 95, 0.24), transparent 14rem),
+        rgba(255, 255, 255, 0.02);
+    }
+
+    .logo-panel img {
+      width: min(220px, 70%);
+      filter: drop-shadow(0 30px 42px rgba(255, 47, 95, 0.28));
+    }
+
+    .code-window {
+      border-top: 1px solid var(--line);
+      background: #0b0a0f;
+    }
+
+    .window-bar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .circle {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    pre {
+      padding: 22px;
+      overflow-x: auto;
+      color: #f7dce4;
+      font-size: 0.94rem;
+      line-height: 1.7;
+    }
+
+    code .kw { color: #ff5f86; }
+    code .fn { color: #42d392; }
+    code .str { color: #ffd166; }
+    code .num { color: #a0c4ff; }
+
+    section {
+      padding: 72px 0;
+    }
+
+    .section-head {
+      max-width: 760px;
+      margin-bottom: 32px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      letter-spacing: -0.06em;
+      line-height: 1;
+      margin-bottom: 14px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      padding: 24px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid var(--line);
+    }
+
+    .card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      background: rgba(255, 47, 95, 0.12);
+      color: #ff8ca7;
+      font-weight: 900;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .terminal {
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #08070a;
+      overflow: hidden;
+    }
+
+    .terminal pre {
+      min-height: 250px;
+    }
+
+    .package-tree {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #f7dce4;
+      white-space: pre-wrap;
+    }
+
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.035);
+    }
+
+    .status-table th,
+    .status-table td {
+      padding: 16px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .status-table th {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .status-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--muted);
+    }
+
+    .badge.good {
+      background: rgba(66, 211, 146, 0.13);
+      color: #9ff0c8;
+    }
+
+    .badge.work {
+      background: rgba(255, 209, 102, 0.13);
+      color: #ffe09a;
+    }
+
+    .badge.plan {
+      background: rgba(160, 196, 255, 0.13);
+      color: #c9dcff;
+    }
+
+    .warning {
+      padding: 26px;
+      border-radius: var(--radius);
+      background: rgba(255, 209, 102, 0.08);
+      border: 1px solid rgba(255, 209, 102, 0.18);
+      color: #ffe8ad;
+    }
+
+    .warning strong {
+      color: #fff1c2;
+    }
+
+    footer {
+      padding: 42px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    footer .container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 860px) {
+      .hero,
+      .split {
+        grid-template-columns: 1fr;
+      }
+
+      .grid,
+      .mini-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 62px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <a class="brand" href="#top" aria-label="Cherry home">
+          <img src="assets/logo2.png" alt="Cherry Logo" />
+          <span>Cherry</span>
+        </a>
+
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#packages">Packages</a>
+          <a href="#install">Install</a>
+          <a href="#status">Status</a>
+        </div>
+
+        <a class="button" href="#install">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero container">
+      <div>
+        <div class="pill"><span class="dot"></span> Linux supported now · Windows in development</div>
+        <h1>A simple language with a <span class="gradient-text">Rust-powered core.</span></h1>
+        <p>
+          Cherry is an independent programming language written in Rust. It is designed to feel quick and approachable like Python, while using a cleaner parser, native packages, and its own runtime.
+        </p>
+
+        <div class="hero-actions">
+          <a class="button primary" href="#install">Install Cherry</a>
+          <a class="button" href="#example">View Example</a>
+        </div>
+
+        <div class="mini-stats">
+          <div class="stat">
+            <strong>.ch files</strong>
+            <span>Cherry source code</span>
+          </div>
+          <div class="stat">
+            <strong>.chy packages</strong>
+            <span>Native package archives</span>
+          </div>
+          <div class="stat">
+            <strong>Standalone ELF</strong>
+            <span>No Rust needed to run</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="logo-panel">
+          <img src="assets/logo2.png" alt="Cherry Logo" />
+        </div>
+        <div class="code-window">
+          <div class="window-bar">
+            <span class="circle"></span>
+            <span class="circle"></span>
+            <span class="circle"></span>
+          </div>
+          <pre><code><span class="kw">import</span> mathplus
+
+<span class="kw">fn</span> <span class="fn">main</span>() {
+    <span class="kw">let</span> result = mathplus.add(<span class="num">5</span>, <span class="num">10</span>)
+    print(result)
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-head">
+          <h2>Built to stay simple.</h2>
+          <p>Cherry is not Python, Rust, or a wrapper. It has its own lexer, parser, runtime, package manager, and execution engine.</p>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="icon">{ }</div>
+            <h3>Cleaner parsing</h3>
+            <p>Cherry uses brace-based blocks and a simpler grammar to avoid slow, complicated, whitespace-sensitive parsing.</p>
+          </div>
+
+          <div class="card">
+            <div class="icon">⚡</div>
+            <h3>Rust-powered runtime</h3>
+            <p>The Cherry executable is written in Rust, but Cherry programs are executed by Cherry's own runtime.</p>
+          </div>
+
+          <div class="card">
+            <div class="icon">📦</div>
+            <h3>Native packages</h3>
+            <p>Packages can include Rust-built native modules while remaining easy to import and use from Cherry code.</p>
+          </div>
+
+          <div class="card">
+            <div class="icon">▶</div>
+            <h3>Quick scripts</h3>
+            <p>Cherry is made for fast scripting, small tools, experiments, and simple programs that are easy to run.</p>
+          </div>
+
+          <div class="card">
+            <div class="icon">🔐</div>
+            <h3>SHA256 verification</h3>
+            <p>Native package targets can include hashes so Cherry can verify binaries before installation.</p>
+          </div>
+
+          <div class="card">
+            <div class="icon">🧪</div>
+            <h3>Experimental by design</h3>
+            <p>Cherry is a hobby language built for learning, testing language ideas, and AI-assisted development.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="example">
+      <div class="container split">
+        <div>
+          <div class="section-head">
+            <h2>Python-like speed. Cleaner structure.</h2>
+            <p>Cherry keeps the syntax small and readable while avoiding Python compatibility problems.</p>
+          </div>
+
+          <div class="terminal">
+            <div class="window-bar">
+              <span class="circle"></span>
+              <span class="circle"></span>
+              <span class="circle"></span>
+            </div>
+            <pre><code><span class="kw">let</span> name = <span class="str">"Cherry"</span>
+<span class="kw">mut</span> count = <span class="num">0</span>
+
+<span class="kw">fn</span> <span class="fn">main</span>() {
+    <span class="kw">while</span> count &lt; <span class="num">3</span> {
+        print(<span class="str">"Hello from "</span> + name)
+        count = count + <span class="num">1</span>
+    }
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Language goals</h3>
+          <p>Cherry aims to be simple enough for beginners, useful enough for real hobby projects, and flexible enough to grow into a larger ecosystem.</p>
+          <br />
+          <p>It is mainly developed with GPT-5.5 assistance, with manual fixes, debugging, refactoring, and optimizations by the project owner.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="packages">
+      <div class="container split">
+        <div class="card">
+          <h2>Native `.chy` packages.</h2>
+          <p>
+            Cherry packages are compressed archives containing metadata and native Rust modules compiled for specific platforms.
+          </p>
+          <br />
+          <div class="package-tree">mathplus.chy
+├── Ident.toml
+├── README.md
+└── bin/
+    └── linux-x86_64/
+        └── libmathplus.so</div>
+        </div>
+
+        <div class="terminal">
+          <div class="window-bar">
+            <span class="circle"></span>
+            <span class="circle"></span>
+            <span class="circle"></span>
+          </div>
+          <pre><code>[[targets]]
+os = <span class="str">"linux"</span>
+arch = <span class="str">"x86_64"</span>
+file = <span class="str">"bin/linux-x86_64/libmathplus.so"</span>
+sha256 = <span class="str">"..."</span>
+
+[api.add]
+args = [<span class="str">"int"</span>, <span class="str">"int"</span>]
+returns = <span class="str">"int"</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="install">
+      <div class="container split">
+        <div>
+          <div class="section-head">
+            <h2>Install and run.</h2>
+            <p>Cherry is currently distributed as a standalone Linux ELF executable.</p>
+          </div>
+
+          <div class="terminal">
+            <div class="window-bar">
+              <span class="circle"></span>
+              <span class="circle"></span>
+              <span class="circle"></span>
+            </div>
+            <pre><code>chmod +x cherry
+./cherry
+
+# Add Cherry to PATH
+./cherry bootstrap
+
+# Run a script
+cherry run main.ch</code></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Rust requirement</h3>
+          <p>Rust is not required to run Cherry programs or use existing packages.</p>
+          <br />
+          <p>Rust is required only when building native `.chy` packages.</p>
+          <br />
+          <div class="terminal">
+            <pre><code>rustc --version
+cargo --version</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="status">
+      <div class="container">
+        <div class="section-head">
+          <h2>Current status.</h2>
+          <p>Cherry is early-stage and experimental. Use it for learning, scripting, prototyping, and language design experiments.</p>
+        </div>
+
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Linux</td>
+              <td><span class="badge good">Supported</span></td>
+            </tr>
+            <tr>
+              <td>Windows</td>
+              <td><span class="badge work">In Development</span></td>
+            </tr>
+            <tr>
+              <td>macOS</td>
+              <td><span class="badge plan">Planned</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <br />
+
+        <div class="warning">
+          <strong>Warning:</strong> Cherry is not recommended for security-sensitive, safety-critical, or commercial production applications yet. APIs, package formats, runtime behavior, and syntax may change while the language evolves.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <span>Cherry — Rust-powered hobby language</span>
+      <span>Built with AI assistance and manual optimization.</span>
+    </div>
+  </footer>
+</body>
+</html>
