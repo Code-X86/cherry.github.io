@@ -1,608 +1,493 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cherry — Rust-Powered Programming Language</title>
-  <meta name="description" content="Cherry is a fast, simple, Rust-powered programming language built for quick scripting, native packages, and clean parsing." />
-
-  <style>
-    :root {
-      --bg: #08070a;
-      --panel: #111016;
-      --panel-2: #17141d;
-      --text: #f7f2f5;
-      --muted: #aaa2ad;
-      --cherry: #ff2f5f;
-      --cherry-dark: #b80f36;
-      --green: #42d392;
-      --line: rgba(255, 255, 255, 0.08);
-      --shadow: 0 30px 80px rgba(255, 47, 95, 0.12);
-      --radius: 24px;
-      --max: 1120px;
-      --grid-x: 0px;
-      --grid-y: 0px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255, 47, 95, 0.16), transparent 28rem),
-        radial-gradient(circle at 80% 20%, rgba(66, 211, 146, 0.10), transparent 26rem),
-        linear-gradient(180deg, #08070a 0%, #0d0b10 45%, #08070a 100%);
-      color: var(--text);
-      line-height: 1.6;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    .dot-grid {
-      position: fixed;
-      inset: -80px;
-      z-index: 0;
-      pointer-events: none;
-      opacity: 0.42;
-      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.18) 1px, transparent 1.7px);
-      background-size: 34px 34px;
-      transform: translate3d(var(--grid-x), var(--grid-y), 0);
-      transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
-      mask-image: radial-gradient(circle at center, black 0%, black 42%, transparent 78%);
-    }
-
-    header,
-    main,
-    footer {
-      position: relative;
-      z-index: 1;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .container {
-      width: min(100% - 32px, var(--max));
-      margin: 0 auto;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      backdrop-filter: blur(18px);
-      background: rgba(8, 7, 10, 0.72);
-      border-bottom: 1px solid var(--line);
-    }
-
-    nav {
-      height: 72px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      font-size: 1.25rem;
-    }
-
-    .brand img {
-      width: 38px;
-      height: 38px;
-      object-fit: contain;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 22px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .nav-links a:hover {
-      color: var(--text);
-    }
-
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      min-height: 44px;
-      padding: 0 18px;
-      border-radius: 999px;
-      font-weight: 700;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.04);
-      transition: 0.2s ease;
-    }
-
-    .button:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.07);
-    }
-
-    .button.primary {
-      border: none;
-      background: linear-gradient(135deg, var(--cherry), var(--cherry-dark));
-      box-shadow: 0 12px 36px rgba(255, 47, 95, 0.3);
-    }
-
-    .button.download {
-      background: rgba(66, 211, 146, 0.11);
-      border-color: rgba(66, 211, 146, 0.28);
-      color: #c9ffe3;
-    }
-
-    .hero {
-      padding: 96px 0 56px;
-      display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
-      gap: 48px;
-      align-items: center;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255, 47, 95, 0.10);
-      border: 1px solid rgba(255, 47, 95, 0.24);
-      color: #ffd3de;
-      font-weight: 700;
-      font-size: 0.9rem;
-      margin-bottom: 24px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 18px var(--green);
-    }
-
-    h1 {
-      font-size: clamp(3rem, 7vw, 6.4rem);
-      line-height: 0.92;
-      letter-spacing: -0.08em;
-      margin-bottom: 24px;
-    }
-
-    .gradient-text {
-      background: linear-gradient(135deg, #fff, #ff8ca7 45%, var(--cherry));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .hero p {
-      color: var(--muted);
-      max-width: 650px;
-      font-size: 1.15rem;
-      margin-bottom: 30px;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-bottom: 30px;
-    }
-
-    .mini-stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      max-width: 620px;
-    }
-
-    .stat {
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid var(--line);
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 1.05rem;
-    }
-
-    .stat span {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .hero-card {
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .logo-panel {
-      display: grid;
-      place-items: center;
-      padding: 42px;
-      min-height: 280px;
-      background:
-        radial-gradient(circle at center, rgba(255, 47, 95, 0.24), transparent 14rem),
-        rgba(255, 255, 255, 0.02);
-    }
-
-    .logo-panel img {
-      width: min(220px, 70%);
-      filter: drop-shadow(0 30px 42px rgba(255, 47, 95, 0.28));
-    }
-
-    .code-window {
-      border-top: 1px solid var(--line);
-      background: #0b0a0f;
-    }
-
-    .window-bar {
-      height: 42px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 16px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .circle {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.18);
-    }
-
-    pre {
-      padding: 22px;
-      overflow-x: auto;
-      color: #f7dce4;
-      font-size: 0.94rem;
-      line-height: 1.7;
-    }
-
-    code .kw { color: #ff5f86; }
-    code .fn { color: #42d392; }
-    code .str { color: #ffd166; }
-    code .num { color: #a0c4ff; }
-
-    section {
-      padding: 72px 0;
-    }
-
-    .section-head {
-      max-width: 760px;
-      margin-bottom: 32px;
-    }
-
-    .section-head h2 {
-      font-size: clamp(2rem, 4vw, 3.2rem);
-      letter-spacing: -0.06em;
-      line-height: 1;
-      margin-bottom: 14px;
-    }
-
-    .section-head p {
-      color: var(--muted);
-      font-size: 1.05rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .card {
-      padding: 24px;
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-      border: 1px solid var(--line);
-    }
-
-    .card h3 {
-      font-size: 1.15rem;
-      margin-bottom: 10px;
-    }
-
-    .card p {
-      color: var(--muted);
-      font-size: 0.96rem;
-    }
-
-    .icon {
-      width: 44px;
-      height: 44px;
-      display: grid;
-      place-items: center;
-      border-radius: 14px;
-      margin-bottom: 18px;
-      background: rgba(255, 47, 95, 0.12);
-      color: #ff8ca7;
-      font-weight: 900;
-    }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      align-items: stretch;
-    }
-
-    .terminal {
-      border-radius: var(--radius);
-      border: 1px solid var(--line);
-      background: #08070a;
-      overflow: hidden;
-    }
-
-    .terminal pre {
-      min-height: 250px;
-    }
-
-    .package-tree {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      color: #f7dce4;
-      white-space: pre-wrap;
-    }
-
-    .status-table {
-      width: 100%;
-      border-collapse: collapse;
-      overflow: hidden;
-      border-radius: var(--radius);
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.035);
-    }
-
-    .status-table th,
-    .status-table td {
-      padding: 16px 18px;
-      text-align: left;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .status-table th {
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .status-table tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .badge {
-      display: inline-flex;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-weight: 800;
-      font-size: 0.82rem;
-      background: rgba(255, 255, 255, 0.07);
-      color: var(--muted);
-    }
-
-    .badge.good {
-      background: rgba(66, 211, 146, 0.13);
-      color: #9ff0c8;
-    }
-
-    .badge.work {
-      background: rgba(255, 209, 102, 0.13);
-      color: #ffe09a;
-    }
-
-    .badge.plan {
-      background: rgba(160, 196, 255, 0.13);
-      color: #c9dcff;
-    }
-
-    .warning {
-      padding: 26px;
-      border-radius: var(--radius);
-      background: rgba(255, 209, 102, 0.08);
-      border: 1px solid rgba(255, 209, 102, 0.18);
-      color: #ffe8ad;
-    }
-
-    .warning strong {
-      color: #fff1c2;
-    }
-
-    footer {
-      padding: 42px 0;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-    }
-
-    footer .container {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    @media (max-width: 860px) {
-      .hero,
-      .split {
-        grid-template-columns: 1fr;
-      }
-
-      .grid,
-      .mini-stats {
-        grid-template-columns: 1fr;
-      }
-
-      .nav-links {
-        display: none;
-      }
-
-      .hero {
-        padding-top: 62px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cherry — Rust-Powered Programming Language</title>
+<meta name="description" content="Cherry is a fast, simple, Rust-powered programming language built for quick scripting, native packages, and clean parsing." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+:root {
+--bg: #08070a;
+--panel: #111016;
+--panel-2: #17141d;
+--text: #f7f2f5;
+--muted: #aaa2ad;
+--cherry: #ff2f5f;
+--cherry-dark: #b80f36;
+--cherry-glow: rgba(255,47,95,0.22);
+--green: #42d392;
+--line: rgba(255,255,255,0.08);
+--line-2: rgba(255,255,255,0.13);
+--shadow: 0 30px 80px rgba(255,47,95,0.12);
+--radius: 22px;
+--max: 1140px;
+--mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+background:
+  radial-gradient(ellipse at 18% 8%, rgba(255,47,95,0.18) 0%, transparent 30rem),
+  radial-gradient(ellipse at 82% 18%, rgba(66,211,146,0.11) 0%, transparent 28rem),
+  radial-gradient(ellipse at 50% 85%, rgba(120,60,180,0.08) 0%, transparent 28rem),
+  linear-gradient(180deg,#08070a 0%,#0d0b11 50%,#08070a 100%);
+color:var(--text);
+line-height:1.6;
+min-height:100vh;
+overflow-x:hidden;
+}
+
+/* ── Dot grid canvas ── */
+#dot-grid{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+header,main,footer{position:relative;z-index:1;}
+a{color:inherit;text-decoration:none;}
+.container{width:min(100% - 32px,var(--max));margin:0 auto;}
+
+/* ── NAV ── */
+header{
+position:sticky;top:0;z-index:20;
+backdrop-filter:blur(24px) saturate(1.4);
+background:rgba(8,7,10,0.68);
+border-bottom:1px solid var(--line);
+}
+nav{height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900;letter-spacing:-0.045em;font-size:1.2rem;}
+.brand-icon{
+width:34px;height:34px;border-radius:10px;
+background:linear-gradient(135deg,var(--cherry),var(--cherry-dark));
+display:grid;place-items:center;
+font-size:1rem;font-weight:900;color:#fff;
+box-shadow:0 6px 20px rgba(255,47,95,0.36);
+flex-shrink:0;
+}
+.brand img{width:34px;height:34px;object-fit:contain;border-radius:10px;}
+.nav-links{display:flex;align-items:center;gap:20px;color:var(--muted);font-size:0.9rem;font-weight:500;}
+.nav-links a{transition:color 0.15s;}
+.nav-links a:hover{color:var(--text);}
+.nav-links a.active{color:var(--text);}
+.button{
+display:inline-flex;align-items:center;justify-content:center;gap:8px;
+min-height:40px;padding:0 16px;border-radius:999px;font-weight:700;font-size:0.88rem;
+border:1px solid var(--line);background:rgba(255,255,255,0.05);
+transition:all 0.18s ease;cursor:pointer;font-family:inherit;color:var(--text);
+}
+.button:hover{transform:translateY(-2px);border-color:var(--line-2);background:rgba(255,255,255,0.09);}
+.button.primary{
+border:none;background:linear-gradient(135deg,var(--cherry) 0%,var(--cherry-dark) 100%);
+box-shadow:0 8px 28px rgba(255,47,95,0.32);color:#fff;
+}
+.button.primary:hover{box-shadow:0 12px 36px rgba(255,47,95,0.44);}
+.button.download{background:rgba(66,211,146,0.1);border-color:rgba(66,211,146,0.26);color:#b8ffdf;}
+.button.download:hover{background:rgba(66,211,146,0.16);border-color:rgba(66,211,146,0.4);}
+.nav-actions{display:flex;align-items:center;gap:10px;}
+
+/* ── HERO ── */
+.hero{
+padding:100px 0 64px;
+display:grid;grid-template-columns:1.1fr 0.9fr;gap:56px;align-items:center;
+}
+.pill{
+display:inline-flex;align-items:center;gap:8px;
+padding:7px 14px;border-radius:999px;
+background:rgba(255,47,95,0.09);border:1px solid rgba(255,47,95,0.22);
+color:#ffd0da;font-weight:700;font-size:0.84rem;margin-bottom:28px;
+}
+.pulse{
+width:8px;height:8px;border-radius:50%;background:var(--green);
+box-shadow:0 0 0 0 rgba(66,211,146,0.6);
+animation:pulse 2.2s ease infinite;
+}
+@keyframes pulse{
+0%{box-shadow:0 0 0 0 rgba(66,211,146,0.6);}
+60%{box-shadow:0 0 0 7px rgba(66,211,146,0);}
+100%{box-shadow:0 0 0 0 rgba(66,211,146,0);}
+}
+h1{
+font-size:clamp(3rem,6.5vw,6rem);line-height:0.9;
+letter-spacing:-0.075em;margin-bottom:26px;font-weight:900;
+}
+.gradient-text{
+background:linear-gradient(135deg,#fff 0%,#ffb3c4 40%,var(--cherry) 80%);
+-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-sub{color:var(--muted);max-width:560px;font-size:1.1rem;margin-bottom:32px;line-height:1.7;}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:36px;}
+.mini-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:580px;}
+.stat{
+padding:14px 16px;border-radius:16px;
+background:rgba(255,255,255,0.03);border:1px solid var(--line);
+transition:border-color 0.2s;
+}
+.stat:hover{border-color:var(--line-2);}
+.stat strong{display:block;font-size:0.98rem;font-weight:700;font-family:var(--mono);color:#e8e0ec;}
+.stat span{color:var(--muted);font-size:0.83rem;}
+
+/* ── Hero card ── */
+.hero-card{
+border-radius:var(--radius);
+background:linear-gradient(160deg,rgba(255,255,255,0.09) 0%,rgba(255,255,255,0.03) 100%);
+border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;
+}
+.logo-panel{
+display:grid;place-items:center;padding:44px;min-height:260px;
+background:
+  radial-gradient(circle at 50% 60%,rgba(255,47,95,0.2) 0%,transparent 65%),
+  rgba(255,255,255,0.015);
+}
+.logo-panel img{width:min(200px,68%);filter:drop-shadow(0 24px 40px rgba(255,47,95,0.3));}
+.code-window{border-top:1px solid var(--line);background:#09080e;}
+.window-bar{
+height:40px;display:flex;align-items:center;gap:7px;padding:0 14px;
+border-bottom:1px solid var(--line);
+}
+.dot-r{width:10px;height:10px;border-radius:50%;background:rgba(255,100,100,0.4);}
+.dot-y{width:10px;height:10px;border-radius:50%;background:rgba(255,200,50,0.35);}
+.dot-g{width:10px;height:10px;border-radius:50%;background:rgba(80,210,80,0.35);}
+pre{padding:20px 22px;overflow-x:auto;color:#f0d8e0;font-size:0.9rem;line-height:1.72;font-family:var(--mono);}
+code .kw{color:#ff6088;}
+code .fn{color:#42d392;}
+code .str{color:#ffd166;}
+code .num{color:#93bfff;}
+code .cm{color:#554858;}
+
+/* ── SECTIONS ── */
+section{padding:80px 0;}
+.section-head{max-width:720px;margin-bottom:40px;}
+.section-head .label{
+display:inline-block;font-size:0.75rem;font-weight:800;letter-spacing:0.12em;
+text-transform:uppercase;color:var(--cherry);margin-bottom:12px;
+}
+.section-head h2{
+font-size:clamp(2rem,4vw,3rem);letter-spacing:-0.06em;line-height:0.97;
+margin-bottom:14px;font-weight:900;
+}
+.section-head p{color:var(--muted);font-size:1.02rem;line-height:1.7;}
+
+/* ── FEATURE GRID ── */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
+.card{
+padding:24px;border-radius:var(--radius);
+background:linear-gradient(160deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02));
+border:1px solid var(--line);transition:border-color 0.2s,transform 0.2s;
+}
+.card:hover{border-color:var(--line-2);transform:translateY(-3px);}
+.card h3{font-size:1.08rem;margin-bottom:9px;font-weight:700;}
+.card p{color:var(--muted);font-size:0.92rem;line-height:1.65;}
+.icon{
+width:42px;height:42px;display:grid;place-items:center;border-radius:13px;
+margin-bottom:16px;background:rgba(255,47,95,0.11);color:#ff8ca7;font-size:1.2rem;
+}
+
+/* ── SPLIT ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch;}
+.terminal{border-radius:var(--radius);border:1px solid var(--line);background:#07060c;overflow:hidden;}
+.terminal pre{min-height:220px;}
+.package-tree{font-family:var(--mono);color:#f0d8e0;white-space:pre-wrap;font-size:0.88rem;line-height:1.8;}
+
+/* ── STATUS TABLE ── */
+.status-table{
+width:100%;border-collapse:collapse;border-radius:var(--radius);
+border:1px solid var(--line);background:rgba(255,255,255,0.025);overflow:hidden;
+}
+.status-table th,.status-table td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);}
+.status-table th{color:var(--muted);font-weight:700;font-size:0.88rem;letter-spacing:0.04em;text-transform:uppercase;}
+.status-table tr:last-child td{border-bottom:0;}
+.status-table tbody tr:hover td{background:rgba(255,255,255,0.02);}
+.badge{
+display:inline-flex;padding:4px 10px;border-radius:999px;
+font-weight:700;font-size:0.78rem;background:rgba(255,255,255,0.06);color:var(--muted);
+}
+.badge.good{background:rgba(66,211,146,0.12);color:#8ef5c2;}
+.badge.work{background:rgba(255,209,102,0.12);color:#ffe09a;}
+.badge.plan{background:rgba(160,196,255,0.12);color:#c6daff;}
+.warning{
+padding:22px 26px;border-radius:var(--radius);
+background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.16);
+color:#ffeab3;font-size:0.94rem;line-height:1.65;
+}
+.warning strong{color:#fff3cc;}
+
+/* ── DIVIDER ── */
+.section-divider{
+height:1px;
+background:linear-gradient(90deg,transparent,var(--line) 30%,var(--line) 70%,transparent);
+margin:0;
+}
+
+/* ── PLAYGROUND ── */
+#playground{padding:80px 0 100px;}
+.playground-shell{
+display:grid;grid-template-columns:172px 1fr;gap:16px;
+}
+.playground-sidebar{display:flex;flex-direction:column;gap:5px;}
+.sidebar-label{
+font-size:0.72rem;font-weight:800;color:var(--muted);
+letter-spacing:0.1em;text-transform:uppercase;padding:0 10px;margin-bottom:6px;
+}
+.eg-btn{
+text-align:left;background:rgba(255,255,255,0.035);border:1px solid var(--line);
+color:var(--muted);padding:8px 12px;border-radius:10px;
+font-size:0.84rem;cursor:pointer;transition:all 0.14s;font-family:inherit;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.eg-btn:hover{background:rgba(255,255,255,0.075);color:var(--text);border-color:var(--line-2);}
+.eg-btn.active{
+background:rgba(255,47,95,0.11);border-color:rgba(255,47,95,0.3);
+color:#ffbdcc;font-weight:600;
+}
+
+/* Main editor/output column */
+.playground-main{display:flex;flex-direction:column;gap:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);background:#07060c;}
+
+/* Top toolbar */
+.pg-toolbar{
+height:44px;display:flex;align-items:center;gap:8px;padding:0 14px;
+border-bottom:1px solid var(--line);background:#0a090f;flex-shrink:0;
+}
+.pg-dots{display:flex;gap:6px;align-items:center;}
+.pg-filename{
+font-size:0.8rem;color:var(--muted);font-family:var(--mono);
+margin-left:8px;flex:1;
+}
+.run-btn{
+background:linear-gradient(135deg,var(--cherry),var(--cherry-dark));
+border:none;color:#fff;font-weight:800;font-size:0.82rem;
+padding:6px 16px;border-radius:999px;cursor:pointer;transition:all 0.15s;
+font-family:inherit;display:flex;align-items:center;gap:6px;
+box-shadow:0 4px 16px rgba(255,47,95,0.28);
+}
+.run-btn:hover{box-shadow:0 6px 22px rgba(255,47,95,0.44);transform:scale(1.03);}
+.run-btn:active{transform:scale(0.97);}
+.run-btn.running{background:rgba(255,209,102,0.18);box-shadow:none;color:#ffe09a;border:1px solid rgba(255,209,102,0.25);}
+.hint-text{font-size:0.73rem;color:#4a4350;font-family:var(--mono);white-space:nowrap;}
+
+/* Editor pane */
+.pg-editor-pane{position:relative;flex:0 0 auto;}
+#cherry-editor{
+width:100%;background:transparent;border:none;outline:none;resize:none;
+color:#eedde5;font-family:var(--mono);font-size:0.9rem;line-height:1.76;
+padding:18px 20px;tab-size:4;min-height:200px;max-height:340px;
+border-bottom:1px solid var(--line);display:block;
+}
+#cherry-editor::selection{background:rgba(255,47,95,0.28);}
+
+/* Resize handle */
+.pg-resize{
+height:6px;background:transparent;cursor:ns-resize;
+border-bottom:1px solid var(--line);flex-shrink:0;
+display:flex;align-items:center;justify-content:center;
+}
+.pg-resize:hover{background:rgba(255,47,95,0.06);}
+.pg-resize::after{
+content:'';width:32px;height:2px;border-radius:2px;
+background:rgba(255,255,255,0.1);
+}
+
+/* Output pane */
+.pg-output-header{
+height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;
+border-bottom:1px solid var(--line);background:#0a090f;flex-shrink:0;
+}
+.pg-output-label{font-size:0.72rem;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;flex:1;}
+.clear-btn{
+background:transparent;border:1px solid var(--line);color:var(--muted);
+font-size:0.74rem;padding:3px 10px;border-radius:999px;cursor:pointer;
+transition:all 0.15s;font-family:inherit;
+}
+.clear-btn:hover{color:var(--text);border-color:var(--line-2);}
+
+#cherry-output{
+min-height:140px;max-height:260px;overflow-y:auto;
+padding:14px 18px;font-family:var(--mono);font-size:0.87rem;
+line-height:1.8;word-break:break-word;flex:1;
+}
+.out-muted{color:#42384a;}
+.out-line{color:#c8fae4;display:block;}
+.out-echo{color:#7a6e82;display:block;} /* echoed input */
+.out-error{color:#ff7a9a;display:block;font-weight:600;}
+.out-info{color:#554858;display:block;font-style:italic;}
+.out-prompt{color:#ffd166;display:block;} /* input prompt text */
+
+/* Input row that appears when program needs input */
+.input-row{
+display:flex;align-items:center;gap:0;
+border-top:1px solid var(--line);flex-shrink:0;
+background:#0a090f;
+}
+.input-caret{
+padding:10px 14px;color:#ffd166;font-family:var(--mono);font-size:0.87rem;
+font-weight:700;flex-shrink:0;
+}
+#program-input{
+flex:1;background:transparent;border:none;outline:none;
+color:#ffd166;font-family:var(--mono);font-size:0.87rem;
+padding:10px 8px 10px 0;
+}
+#program-input::placeholder{color:#4a4050;}
+.input-submit{
+background:rgba(255,209,102,0.12);border:none;border-left:1px solid var(--line);
+color:#ffd166;font-family:var(--mono);font-size:0.8rem;font-weight:700;
+padding:10px 14px;cursor:pointer;transition:background 0.15s;
+}
+.input-submit:hover{background:rgba(255,209,102,0.2);}
+.input-row.hidden{display:none;}
+
+/* ── FOOTER ── */
+footer{
+padding:48px 0;
+border-top:1px solid var(--line);color:var(--muted);
+background:rgba(0,0,0,0.2);
+}
+footer .container{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;}
+.footer-brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--text);}
+.footer-links{display:flex;gap:20px;font-size:0.88rem;}
+.footer-links a:hover{color:var(--text);}
+.footer-note{font-size:0.82rem;opacity:0.6;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+.hero,.split{grid-template-columns:1fr;}
+.grid{grid-template-columns:1fr 1fr;}
+.mini-stats{grid-template-columns:1fr 1fr 1fr;}
+.nav-links{display:none;}
+.hero{padding-top:56px;}
+.playground-shell{grid-template-columns:1fr;}
+.playground-sidebar{flex-direction:row;flex-wrap:wrap;}
+.eg-btn{flex:0 0 auto;}
+}
+@media(max-width:560px){
+.grid{grid-template-columns:1fr;}
+.mini-stats{grid-template-columns:1fr 1fr;}
+h1{letter-spacing:-0.06em;}
+}
+</style>
 </head>
 <body>
-  <div class="dot-grid" aria-hidden="true"></div>
 
-  <header>
-    <div class="container">
-      <nav>
-        <a class="brand" href="#top" aria-label="Cherry home">
-          <img src="assets/logo2.svg" alt="Cherry Logo" />
-          <span>Cherry</span>
-        </a>
+<canvas id="dot-grid" aria-hidden="true"></canvas>
 
-        <div class="nav-links">
-          <a href="#features">Features</a>
-          <a href="#packages">Packages</a>
-          <a href="#install">Install</a>
-          <a href="#status">Status</a>
-        </div>
+<header>
+<div class="container">
+<nav>
+  <a class="brand" href="#top" aria-label="Cherry home">
+    <div class="brand-icon" aria-hidden="true">ch</div>
+    <span>Cherry</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#packages">Packages</a>
+    <a href="#install">Install</a>
+    <a href="#status">Status</a>
+    <a href="#playground">Playground</a>
+  </div>
+  <div class="nav-actions">
+    <a class="button download" href="cherry-linux-x86_64" download>↓ Linux</a>
+  </div>
+</nav>
+</div>
+</header>
 
-        <a class="button download" href="cherry-linux-x86_64" download>Download Linux</a>
-      </nav>
+<main id="top">
+
+<!-- HERO -->
+<section class="hero container">
+<div>
+  <div class="pill"><span class="pulse"></span> Linux live now · Windows in development</div>
+  <h1>Code fast.<br><span class="gradient-text">Think simple.</span></h1>
+  <p class="hero-sub">Cherry is an independent language written in Rust — designed to feel as quick as Python while bringing a cleaner parser, native packages, and its own runtime engine.</p>
+  <div class="hero-actions">
+    <a class="button primary" href="cherry-linux-x86_64" download>Install Cherry</a>
+    <a class="button" href="#playground">Try in browser →</a>
+  </div>
+  <div class="mini-stats">
+    <div class="stat"><strong>.ch</strong><span>Source files</span></div>
+    <div class="stat"><strong>.chy</strong><span>Native packages</span></div>
+    <div class="stat"><strong>ELF</strong><span>No runtime needed</span></div>
+  </div>
+</div>
+<div class="hero-card">
+  <div class="logo-panel">
+    <img src="assets/logo2.svg" alt="Cherry Logo" />
+  </div>
+  <div class="code-window">
+    <div class="window-bar">
+      <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
     </div>
-  </header>
-
-  <main id="top">
-    <section class="hero container">
-      <div>
-        <div class="pill"><span class="dot"></span> Linux supported now · Windows in development</div>
-        <h1>A simple language with a <span class="gradient-text">Rust-powered core.</span></h1>
-        <p>
-          Cherry is an independent programming language written in Rust. It is designed to feel quick and approachable like Python, while using a cleaner parser, native packages, and its own runtime.
-        </p>
-
-        <div class="hero-actions">
-          <a class="button primary" href="cherry-linux-x86_64" download>Install Cherry</a>
-          <a class="button" href="#example">View Example</a>
-        </div>
-
-        <div class="mini-stats">
-          <div class="stat">
-            <strong>.ch files</strong>
-            <span>Cherry source code</span>
-          </div>
-          <div class="stat">
-            <strong>.chy packages</strong>
-            <span>Native package archives</span>
-          </div>
-          <div class="stat">
-            <strong>Standalone ELF</strong>
-            <span>No Rust needed to run</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-card">
-        <div class="logo-panel">
-          <img src="assets/logo2.svg" alt="Cherry Logo" />
-        </div>
-        <div class="code-window">
-          <div class="window-bar">
-            <span class="circle"></span>
-            <span class="circle"></span>
-            <span class="circle"></span>
-          </div>
-          <pre><code><span class="kw">import</span> mathplus
+    <pre><code><span class="kw">import</span> mathplus
 
 <span class="kw">fn</span> <span class="fn">main</span>() {
     <span class="kw">let</span> result = mathplus.add(<span class="num">5</span>, <span class="num">10</span>)
-    print(result)
+    print(result)  <span class="cm"># 15</span>
 }</code></pre>
-        </div>
-      </div>
-    </section>
+  </div>
+</div>
+</section>
 
-    <section id="features">
-      <div class="container">
-        <div class="section-head">
-          <h2>Built to stay simple.</h2>
-          <p>Cherry is not Python, Rust, or a wrapper. It has its own lexer, parser, runtime, package manager, and execution engine.</p>
-        </div>
+<div class="section-divider"></div>
 
-        <div class="grid">
-          <div class="card">
-            <div class="icon">{ }</div>
-            <h3>Cleaner parsing</h3>
-            <p>Cherry uses brace-based blocks and a simpler grammar to avoid slow, complicated, whitespace-sensitive parsing.</p>
-          </div>
+<!-- FEATURES -->
+<section id="features">
+<div class="container">
+  <div class="section-head">
+    <div class="label">Why Cherry</div>
+    <h2>Built to stay simple.</h2>
+    <p>Not Python. Not Rust. Not a wrapper. Cherry has its own lexer, parser, runtime, package manager, and execution engine — written from scratch.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="icon">{ }</div>
+      <h3>Cleaner parsing</h3>
+      <p>Brace-based blocks and a deterministic grammar. No whitespace sensitivity, no surprises.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⚡</div>
+      <h3>Rust-powered core</h3>
+      <p>The interpreter and toolchain are written in Rust, but you never need Rust installed to run Cherry code.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📦</div>
+      <h3>Native packages</h3>
+      <p>Packages ship compiled Rust modules as <code>.chy</code> archives — SHA256-verified on install.</p>
+    </div>
+    <div class="card">
+      <div class="icon">▶</div>
+      <h3>Quick scripting</h3>
+      <p>Write a <code>.ch</code> file and run it immediately. No build step, no boilerplate, no config required.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🔐</div>
+      <h3>Verified installs</h3>
+      <p>Every native binary target includes a SHA256 hash. Cherry rejects mismatched packages before execution.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🧪</div>
+      <h3>Experimental by design</h3>
+      <p>Cherry is a hobby language built for learning, prototyping, and AI-assisted language development.</p>
+    </div>
+  </div>
+</div>
+</section>
 
-          <div class="card">
-            <div class="icon">⚡</div>
-            <h3>Rust-powered runtime</h3>
-            <p>The Cherry executable is written in Rust, but Cherry programs are executed by Cherry's own runtime.</p>
-          </div>
+<div class="section-divider"></div>
 
-          <div class="card">
-            <div class="icon">📦</div>
-            <h3>Native packages</h3>
-            <p>Packages can include Rust-built native modules while remaining easy to import and use from Cherry code.</p>
-          </div>
-
-          <div class="card">
-            <div class="icon">▶</div>
-            <h3>Quick scripts</h3>
-            <p>Cherry is made for fast scripting, small tools, experiments, and simple programs that are easy to run.</p>
-          </div>
-
-          <div class="card">
-            <div class="icon">🔐</div>
-            <h3>SHA256 verification</h3>
-            <p>Native package targets can include hashes so Cherry can verify binaries before installation.</p>
-          </div>
-
-          <div class="card">
-            <div class="icon">🧪</div>
-            <h3>Experimental by design</h3>
-            <p>Cherry is a hobby language built for learning, testing language ideas, and AI-assisted development.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="example">
-      <div class="container split">
-        <div>
-          <div class="section-head">
-            <h2>Python-like speed. Cleaner structure.</h2>
-            <p>Cherry keeps the syntax small and readable while avoiding Python compatibility problems.</p>
-          </div>
-
-          <div class="terminal">
-            <div class="window-bar">
-              <span class="circle"></span>
-              <span class="circle"></span>
-              <span class="circle"></span>
-            </div>
-            <pre><code><span class="kw">let</span> name = <span class="str">"Cherry"</span>
-<span class="kw">mut</span> count = <span class="num">0</span>
+<!-- EXAMPLE -->
+<section id="example">
+<div class="container split">
+  <div>
+    <div class="section-head">
+      <div class="label">Syntax</div>
+      <h2>Familiar, but cleaner.</h2>
+      <p>Cherry feels like Python to write but uses braces for blocks and has no indentation rules.</p>
+    </div>
+    <div class="terminal">
+      <div class="window-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+      <pre><code><span class="kw">let</span> name = <span class="str">"Cherry"</span>
+<span class="kw">let</span> <span class="kw">mut</span> count = <span class="num">0</span>
 
 <span class="kw">fn</span> <span class="fn">main</span>() {
     <span class="kw">while</span> count &lt; <span class="num">3</span> {
@@ -610,166 +495,816 @@
         count = count + <span class="num">1</span>
     }
 }</code></pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Language goals</h3>
-          <p>Cherry aims to be simple enough for beginners, useful enough for real hobby projects, and flexible enough to grow into a larger ecosystem.</p>
-          <br />
-          <p>It is mainly developed with GPT-5.5 assistance, with manual fixes, debugging, refactoring, and optimizations by the project owner.</p>
-        </div>
+    </div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;gap:20px;">
+    <div>
+      <h3>Language goals</h3>
+      <p style="margin-top:8px;">Simple enough for beginners, useful enough for real hobby projects, and flexible enough to grow into a larger ecosystem.</p>
+    </div>
+    <div style="border-top:1px solid var(--line);padding-top:20px;">
+      <h3>How it's built</h3>
+      <p style="margin-top:8px;">Developed with GPT-5.5 assistance for iteration speed, with manual debugging, refactoring, and optimizations by the project owner.</p>
+    </div>
+    <div style="border-top:1px solid var(--line);padding-top:20px;display:flex;flex-direction:column;gap:6px;">
+      <span style="font-size:0.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Types</span>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="font-family:var(--mono);font-size:0.82rem;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,0.06);color:#d8c8e0;">int</span>
+        <span style="font-family:var(--mono);font-size:0.82rem;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,0.06);color:#d8c8e0;">float</span>
+        <span style="font-family:var(--mono);font-size:0.82rem;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,0.06);color:#d8c8e0;">bool</span>
+        <span style="font-family:var(--mono);font-size:0.82rem;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,0.06);color:#d8c8e0;">string</span>
+        <span style="font-family:var(--mono);font-size:0.82rem;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,0.06);color:#d8c8e0;">none</span>
       </div>
-    </section>
+    </div>
+  </div>
+</div>
+</section>
 
-    <section id="packages">
-      <div class="container split">
-        <div class="card">
-          <h2>Native `.chy` packages.</h2>
-          <p>
-            Cherry packages are compressed archives containing metadata and native Rust modules compiled for specific platforms.
-          </p>
-          <br />
-          <div class="package-tree">mathplus.chy
+<div class="section-divider"></div>
+
+<!-- PACKAGES -->
+<section id="packages">
+<div class="container split">
+  <div class="card">
+    <div class="section-head" style="margin-bottom:20px;">
+      <div class="label">Package system</div>
+      <h2>Native <code style="font-size:inherit;">.chy</code> packages.</h2>
+      <p>Compressed archives containing metadata and platform-specific Rust modules. No compiler needed to use them.</p>
+    </div>
+    <div class="package-tree">mathplus.chy
 ├── Ident.toml
 ├── README.md
 └── bin/
     └── linux-x86_64/
         └── libmathplus.so</div>
-        </div>
-
-        <div class="terminal">
-          <div class="window-bar">
-            <span class="circle"></span>
-            <span class="circle"></span>
-            <span class="circle"></span>
-          </div>
-          <pre><code>[[targets]]
+  </div>
+  <div class="terminal">
+    <div class="window-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+    <pre><code>[[targets]]
 os = <span class="str">"linux"</span>
 arch = <span class="str">"x86_64"</span>
 file = <span class="str">"bin/linux-x86_64/libmathplus.so"</span>
-sha256 = <span class="str">"..."</span>
+sha256 = <span class="str">"a3f8..."</span>
 
 [api.add]
 args = [<span class="str">"int"</span>, <span class="str">"int"</span>]
+returns = <span class="str">"int"</span>
+
+[api.mul]
+args = [<span class="str">"int"</span>, <span class="str">"int"</span>]
 returns = <span class="str">"int"</span></code></pre>
-        </div>
-      </div>
-    </section>
+  </div>
+</div>
+</section>
 
-    <section id="install">
-      <div class="container split">
-        <div>
-          <div class="section-head">
-            <h2>Install and run.</h2>
-            <p>Cherry is currently distributed as a standalone Linux ELF executable.</p>
-          </div>
+<div class="section-divider"></div>
 
-          <div class="terminal">
-            <div class="window-bar">
-              <span class="circle"></span>
-              <span class="circle"></span>
-              <span class="circle"></span>
-            </div>
-            <pre><code>chmod +x cherry
-./cherry
+<!-- INSTALL -->
+<section id="install">
+<div class="container split">
+  <div>
+    <div class="section-head">
+      <div class="label">Getting started</div>
+      <h2>Install and run.</h2>
+      <p>Cherry ships as a single standalone Linux ELF. No dependencies, no runtime required.</p>
+    </div>
+    <div class="terminal">
+      <div class="window-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+      <pre><code><span class="cm"># Make executable</span>
+chmod +x cherry
 
-# Add Cherry to PATH
+<span class="cm"># Add to PATH</span>
 ./cherry bootstrap
 
-# Run a script
-cherry run main.ch</code></pre>
-          </div>
-        </div>
+<span class="cm"># Run a script</span>
+cherry run main.ch
 
-        <div class="card">
-          <h3>Rust requirement</h3>
-          <p>Rust is not required to run Cherry programs or use existing packages.</p>
-          <br />
-          <p>Rust is required only when building native `.chy` packages.</p>
-          <br />
-          <div class="terminal">
-            <pre><code>rustc --version
-cargo --version</code></pre>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="status">
-      <div class="container">
-        <div class="section-head">
-          <h2>Current status.</h2>
-          <p>Cherry is early-stage and experimental. Use it for learning, scripting, prototyping, and language design experiments.</p>
-        </div>
-
-        <table class="status-table">
-          <thead>
-            <tr>
-              <th>Platform</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Linux</td>
-              <td><span class="badge good">Supported</span></td>
-            </tr>
-            <tr>
-              <td>Windows</td>
-              <td><span class="badge work">In Development</span></td>
-            </tr>
-            <tr>
-              <td>macOS</td>
-              <td><span class="badge plan">Planned</span></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <br />
-
-        <div class="warning">
-          <strong>Warning:</strong> Cherry is not recommended for security-sensitive, safety-critical, or commercial production applications yet. APIs, package formats, runtime behavior, and syntax may change while the language evolves.
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="container">
-      <span>Cherry — Rust-powered hobby language</span>
-      <span>Built with AI assistance and manual optimization.</span>
+<span class="cm"># Check environment</span>
+cherry doctor</code></pre>
     </div>
-  </footer>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="card">
+      <h3>Rust requirement</h3>
+      <p style="margin-top:8px;">Rust is <em>not</em> required to run Cherry programs or use existing packages. It's only needed when building native <code>.chy</code> packages from source.</p>
+    </div>
+    <div class="card">
+      <h3>CLI commands</h3>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:0.85rem;">
+          <code style="color:#42d392;font-family:var(--mono);">cherry run</code><span style="color:var(--muted);">Execute a .ch file</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:0.85rem;">
+          <code style="color:#42d392;font-family:var(--mono);">cherry check</code><span style="color:var(--muted);">Parse without running</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:0.85rem;">
+          <code style="color:#42d392;font-family:var(--mono);">cherry install</code><span style="color:var(--muted);">Install a .chy package</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:0.85rem;">
+          <code style="color:#42d392;font-family:var(--mono);">cherry new</code><span style="color:var(--muted);">Scaffold a project</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;font-size:0.85rem;">
+          <code style="color:#42d392;font-family:var(--mono);">cherry doctor</code><span style="color:var(--muted);">Check environment</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
 
-  <script>
-    const root = document.documentElement;
-    let currentX = 0;
-    let currentY = 0;
-    let targetX = 0;
-    let targetY = 0;
+<div class="section-divider"></div>
 
-    function setTargetFromPointer(event) {
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      targetX = ((event.clientX - centerX) / centerX) * 26;
-      targetY = ((event.clientY - centerY) / centerY) * 26;
+<!-- STATUS -->
+<section id="status">
+<div class="container">
+  <div class="section-head">
+    <div class="label">Roadmap</div>
+    <h2>Current status.</h2>
+    <p>Cherry is early-stage and experimental. Use it for learning, scripting, prototyping, and language design experiments.</p>
+  </div>
+  <table class="status-table">
+    <thead><tr><th>Platform</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Linux x86_64</td><td><span class="badge good">Supported</span></td><td style="color:var(--muted);font-size:0.9rem;">Standalone ELF, fully tested</td></tr>
+      <tr><td>Windows x86_64</td><td><span class="badge work">In Development</span></td><td style="color:var(--muted);font-size:0.9rem;">Cross-compile work in progress</td></tr>
+      <tr><td>macOS aarch64</td><td><span class="badge plan">Planned</span></td><td style="color:var(--muted);font-size:0.9rem;">After Windows support lands</td></tr>
+    </tbody>
+  </table>
+  <br />
+  <div class="warning">
+    <strong>Not production-ready:</strong> Cherry is not recommended for security-sensitive, safety-critical, or commercial production use. APIs, package formats, runtime behavior, and syntax may change as the language evolves.
+  </div>
+</div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- PLAYGROUND -->
+<section id="playground">
+<div class="container">
+  <div class="section-head">
+    <div class="label">Interactive</div>
+    <h2>Try Cherry in your browser.</h2>
+    <p>A complete Cherry emulator — variables, functions, loops, recursion, math, and <code>input()</code> support. Pick an example or write your own. <kbd style="font-size:0.78rem;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.07);border:1px solid var(--line);font-family:var(--mono);">Ctrl+Enter</kbd> to run.</p>
+  </div>
+  <div class="playground-shell">
+    <!-- Sidebar -->
+    <div class="playground-sidebar">
+      <p class="sidebar-label">Examples</p>
+      <button class="eg-btn" data-eg="hello">Hello World</button>
+      <button class="eg-btn" data-eg="input">User input</button>
+      <button class="eg-btn" data-eg="calc">Calculator</button>
+      <button class="eg-btn" data-eg="vars">Variables</button>
+      <button class="eg-btn" data-eg="fn">Functions</button>
+      <button class="eg-btn" data-eg="loop">While loop</button>
+      <button class="eg-btn" data-eg="factorial">Factorial</button>
+      <button class="eg-btn" data-eg="fizzbuzz">FizzBuzz</button>
+      <button class="eg-btn" data-eg="fibonacci">Fibonacci</button>
+      <button class="eg-btn" data-eg="guess">Guess game</button>
+      <button class="eg-btn" data-eg="mathpkg">mathplus pkg</button>
+      <button class="eg-btn" data-eg="bool">Booleans</button>
+    </div>
+
+    <!-- Editor + Output -->
+    <div class="playground-main">
+      <!-- Toolbar -->
+      <div class="pg-toolbar">
+        <div class="pg-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="pg-filename">main.ch</span>
+        <span class="hint-text">Ctrl+Enter to run</span>
+        <button class="run-btn" id="run-btn">▶ Run</button>
+      </div>
+
+      <!-- Editor -->
+      <div class="pg-editor-pane">
+        <textarea id="cherry-editor" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off">fn main() {
+    let name = "Cherry"
+    print("Hello from " + name)
+}</textarea>
+      </div>
+
+      <!-- Resize handle -->
+      <div class="pg-resize" id="pg-resize"></div>
+
+      <!-- Output header -->
+      <div class="pg-output-header">
+        <span class="pg-output-label">Output</span>
+        <button class="clear-btn" id="clear-btn">clear</button>
+      </div>
+
+      <!-- Output -->
+      <div id="cherry-output"><span class="out-muted">Press ▶ Run to execute your Cherry code.</span></div>
+
+      <!-- Input row (shown when program calls input()) -->
+      <div class="input-row hidden" id="input-row">
+        <span class="input-caret">›</span>
+        <input type="text" id="program-input" placeholder="type here and press Enter…" autocomplete="off" autocorrect="off" spellcheck="false" />
+        <button class="input-submit" id="input-submit">↵</button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+</main>
+
+<footer>
+<div class="container">
+  <div class="footer-brand">
+    <div class="brand-icon" style="width:28px;height:28px;font-size:0.8rem;">ch</div>
+    Cherry
+  </div>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#install">Install</a>
+    <a href="#playground">Playground</a>
+  </div>
+  <span class="footer-note">Rust-powered hobby language · Built with AI assistance</span>
+</div>
+</footer>
+
+<!-- ── DOT GRID ── -->
+<script>
+(function(){
+  const canvas = document.getElementById('dot-grid');
+  const ctx = canvas.getContext('2d');
+  const SPACING=34, DOT_R=0.9, BASE_ALPHA=0.16, INFLUENCE=280, BOOST=0.52;
+  let W=0,H=0,mouseX=-9999,mouseY=-9999,lerpX=-9999,lerpY=-9999;
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  window.addEventListener('resize',resize,{passive:true}); resize();
+  window.addEventListener('pointermove',e=>{mouseX=e.clientX;mouseY=e.clientY;},{passive:true});
+  window.addEventListener('pointerleave',()=>{mouseX=-9999;mouseY=-9999;});
+  function vignette(x,y){
+    const cx=W/2,cy=H/2;
+    const dx=(x-cx)/(W*0.5),dy=(y-cy)/(H*0.5);
+    const d=Math.sqrt(dx*dx+dy*dy);
+    const t=Math.max(0,Math.min(1,(d-0.38)/(0.72-0.38)));
+    return 1-t;
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    lerpX+=(mouseX<-999?-9999:mouseX-lerpX)*(mouseX<-999?0.04:0.085);
+    lerpY+=(mouseY<-999?-9999:mouseY-lerpY)*(mouseY<-999?0.04:0.085);
+    const offX=SPACING/2,offY=SPACING/2;
+    const cols=Math.ceil(W/SPACING)+2,rows=Math.ceil(H/SPACING)+2;
+    for(let r=-1;r<rows;r++){
+      for(let c=-1;c<cols;c++){
+        const x=c*SPACING+offX,y=r*SPACING+offY;
+        const vm=vignette(x,y); if(vm<=0) continue;
+        let boost=0;
+        if(lerpX>-999){const dx=x-lerpX,dy=y-lerpY,d=Math.sqrt(dx*dx+dy*dy);if(d<INFLUENCE)boost=BOOST*Math.pow(1-d/INFLUENCE,2);}
+        const alpha=(BASE_ALPHA+boost)*vm;
+        ctx.beginPath();ctx.arc(x,y,DOT_R,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,255,255,${alpha.toFixed(3)})`;ctx.fill();
+      }
     }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
 
-    function animateGrid() {
-      currentX += (targetX - currentX) * 0.035;
-      currentY += (targetY - currentY) * 0.035;
-      root.style.setProperty("--grid-x", `${currentX.toFixed(2)}px`);
-      root.style.setProperty("--grid-y", `${currentY.toFixed(2)}px`);
-      requestAnimationFrame(animateGrid);
+<!-- ── CHERRY INTERPRETER ── -->
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════ EXAMPLES ═══════════════ */
+const EXAMPLES = {
+hello:`fn main() {\n    let name = "Cherry"\n    print("Hello from " + name)\n}`,
+
+input:`fn main() {\n    print("What is your name?")\n    let name = input()\n    print("Hello, " + name + "!")\n    print("Nice to meet you.")\n}`,
+
+calc:`fn main() {\n    print("Enter first number:")\n    let a = input_int()\n    print("Enter second number:")\n    let b = input_int()\n    print("Sum:     " + (a + b))\n    print("Product: " + (a * b))\n    print("Diff:    " + (a - b))\n}`,
+
+vars:`let count = 10\nlet ratio = 2.5\nlet enabled = true\nlet msg = "Cherry"\n\nfn main() {\n    print(count)\n    print(ratio)\n    print(enabled)\n    print(msg)\n    let mut x = 1\n    x = x + 99\n    print(x)\n}`,
+
+fn:`fn add(a, b) {\n    return a + b\n}\n\nfn greet(name) {\n    return "Hello, " + name + "!"\n}\n\nfn square(n) {\n    return n * n\n}\n\nfn main() {\n    print(add(7, 8))\n    print(greet("world"))\n    print(square(9))\n}`,
+
+loop:`fn main() {\n    let mut i = 1\n    while i <= 5 {\n        print(i)\n        i = i + 1\n    }\n    print("done")\n}`,
+
+factorial:`fn factorial(n) {\n    if n <= 1 {\n        return 1\n    }\n    return n * factorial(n - 1)\n}\n\nfn main() {\n    print(factorial(5))\n    print(factorial(10))\n    print(factorial(12))\n}`,
+
+fizzbuzz:`fn main() {\n    let mut i = 1\n    while i <= 20 {\n        if i % 15 == 0 {\n            print("FizzBuzz")\n        } else {\n            if i % 3 == 0 {\n                print("Fizz")\n            } else {\n                if i % 5 == 0 {\n                    print("Buzz")\n                } else {\n                    print(i)\n                }\n            }\n        }\n        i = i + 1\n    }\n}`,
+
+fibonacci:`fn fib(n) {\n    if n <= 1 {\n        return n\n    }\n    return fib(n - 1) + fib(n - 2)\n}\n\nfn main() {\n    let mut i = 0\n    while i < 12 {\n        print(fib(i))\n        i = i + 1\n    }\n}`,
+
+guess:`fn main() {\n    let secret = 42\n    print("I'm thinking of a number between 1 and 100.")\n    print("Enter your guess:")\n    let guess = input_int()\n    if guess == secret {\n        print("Correct! You got it!")\n    } else {\n        if guess < secret {\n            print("Too low! The answer was " + secret)\n        } else {\n            print("Too high! The answer was " + secret)\n        }\n    }\n}`,
+
+mathpkg:`import mathplus\n\nfn main() {\n    let a = mathplus.add(5, 10)\n    let b = mathplus.mul(6, 7)\n    print("5 + 10 = " + a)\n    print("6 * 7  = " + b)\n    print("100 + 200 = " + mathplus.add(100, 200))\n}`,
+
+bool:`fn main() {\n    let ready = true\n    let enabled = false\n    print(ready && enabled)\n    print(ready || enabled)\n    print(!ready)\n    print(!enabled)\n    if ready && !enabled {\n        print("ready but not enabled")\n    }\n}`,
+};
+
+/* ═══════════════ LEXER ═══════════════ */
+const TT={
+  NUM:'NUM',FLOAT:'FLOAT',STR:'STR',BOOL:'BOOL',NONE:'NONE',IDENT:'IDENT',
+  PLUS:'+',MINUS:'-',STAR:'*',SLASH:'/',PERCENT:'%',
+  EQ:'==',NEQ:'!=',LT:'<',LTE:'<=',GT:'>',GTE:'>=',
+  AND:'&&',OR:'||',BANG:'!',ASSIGN:'=',
+  LPAREN:'(',RPAREN:')',LBRACE:'{',RBRACE:'}',COMMA:',',DOT:'.',
+  NEWLINE:'NL',EOF:'EOF',
+  KW_LET:'KW_LET',KW_MUT:'KW_MUT',KW_FN:'KW_FN',KW_IF:'KW_IF',
+  KW_ELSE:'KW_ELSE',KW_WHILE:'KW_WHILE',KW_RETURN:'KW_RETURN',
+  KW_IMPORT:'KW_IMPORT',KW_PRINT:'KW_PRINT',
+};
+const KW_MAP={let:TT.KW_LET,mut:TT.KW_MUT,fn:TT.KW_FN,if:TT.KW_IF,
+  else:TT.KW_ELSE,while:TT.KW_WHILE,return:TT.KW_RETURN,
+  import:TT.KW_IMPORT,print:TT.KW_PRINT};
+
+function lex(src){
+  const tokens=[];let i=0,line=1,col=1;
+  function adv(){const c=src[i++];if(c==='\n'){line++;col=1;}else col++;return c;}
+  function pk(o=0){return src[i+o];}
+  while(i<src.length){
+    if(/[ \t\r]/.test(src[i])){adv();continue;}
+    if(src[i]==='#'||(src[i]==='/'&&pk(1)==='/')){while(i<src.length&&src[i]!=='\n')adv();continue;}
+    if(src[i]==='\n'){tokens.push({type:TT.NEWLINE,line,col});adv();continue;}
+    const p={line,col};
+    if(src[i]==='"'){
+      adv();let s='';
+      while(i<src.length&&src[i]!=='"'){
+        if(src[i]==='\\'){adv();const e=adv();s+=e==='\n'?'\n':e==='\t'?'\t':e;}
+        else s+=adv();
+      }
+      if(src[i]==='"')adv();
+      tokens.push({type:TT.STR,value:s,...p});continue;
     }
+    if(/[0-9]/.test(src[i])){
+      let n='',isF=false;
+      while(i<src.length&&/[0-9]/.test(src[i]))n+=adv();
+      if(src[i]==='.'&&/[0-9]/.test(pk(1))){isF=true;n+=adv();while(i<src.length&&/[0-9]/.test(src[i]))n+=adv();}
+      tokens.push({type:isF?TT.FLOAT:TT.NUM,value:isF?parseFloat(n):parseInt(n,10),...p});continue;
+    }
+    if(/[a-zA-Z_]/.test(src[i])){
+      let id='';
+      while(i<src.length&&/[a-zA-Z0-9_]/.test(src[i]))id+=adv();
+      if(id==='true'){tokens.push({type:TT.BOOL,value:true,...p});continue;}
+      if(id==='false'){tokens.push({type:TT.BOOL,value:false,...p});continue;}
+      if(id==='none'){tokens.push({type:TT.NONE,value:null,...p});continue;}
+      const kw=KW_MAP[id];
+      if(kw){tokens.push({type:kw,raw:id,...p});continue;}
+      tokens.push({type:TT.IDENT,value:id,...p});continue;
+    }
+    const two=src[i]+src[i+1];
+    const TWO={'==':TT.EQ,'!=':TT.NEQ,'<=':TT.LTE,'>=':TT.GTE,'&&':TT.AND,'||':TT.OR};
+    if(TWO[two]){tokens.push({type:TWO[two],...p});adv();adv();continue;}
+    const ONE={'+':TT.PLUS,'-':TT.MINUS,'*':TT.STAR,'/':TT.SLASH,'%':TT.PERCENT,
+               '<':TT.LT,'>':TT.GT,'!':TT.BANG,'=':TT.ASSIGN,
+               '(':TT.LPAREN,')':TT.RPAREN,'{':TT.LBRACE,'}':TT.RBRACE,',':TT.COMMA,'.':TT.DOT};
+    if(ONE[src[i]]){tokens.push({type:ONE[src[i]],...p});adv();continue;}
+    adv();
+  }
+  tokens.push({type:TT.EOF,line,col});
+  return tokens;
+}
 
-    window.addEventListener("pointermove", setTargetFromPointer, { passive: true });
-    window.addEventListener("pointerleave", () => {
-      targetX = 0;
-      targetY = 0;
-    });
-    animateGrid();
-  </script>
+/* ═══════════════ PARSER ═══════════════ */
+class ParseError extends Error{constructor(m,l,c){super(m);this.line=l;this.col=c;}}
+
+function parse(tokens){
+  let idx=0;
+  function peek(o=0){return tokens[Math.min(idx+o,tokens.length-1)];}
+  function cur(){return peek(0);}
+  function skipNL(){while(cur().type===TT.NEWLINE)idx++;}
+  function eat(type){
+    skipNL();const t=cur();
+    if(t.type!==type)throw new ParseError(`expected ${type} but got '${t.raw||t.value||t.type}'`,t.line,t.col);
+    idx++;return t;
+  }
+  function check(type){skipNL();return cur().type===type;}
+  function parseProgram(){
+    const stmts=[];
+    while(true){skipNL();if(cur().type===TT.EOF)break;stmts.push(parseStmt());}
+    return{type:'Program',body:stmts};
+  }
+  function parseStmt(){
+    skipNL();const t=cur();
+    if(t.type===TT.KW_LET)return parseLet();
+    if(t.type===TT.KW_FN)return parseFn();
+    if(t.type===TT.KW_IF)return parseIf();
+    if(t.type===TT.KW_WHILE)return parseWhile();
+    if(t.type===TT.KW_RETURN)return parseReturn();
+    if(t.type===TT.KW_IMPORT)return parseImport();
+    if(t.type===TT.KW_PRINT)return parsePrint();
+    return parseExprOrAssign();
+  }
+  function parseLet(){
+    const p=cur();idx++;
+    let mutable=false;
+    if(cur().type===TT.KW_MUT){mutable=true;idx++;}
+    const name=eat(TT.IDENT).value;eat(TT.ASSIGN);
+    return{type:'Let',name,mutable,value:parseExpr(),line:p.line};
+  }
+  function parseFn(){
+    const p=cur();idx++;
+    const name=eat(TT.IDENT).value;eat(TT.LPAREN);
+    const params=[];skipNL();
+    while(!check(TT.RPAREN)&&cur().type!==TT.EOF){
+      params.push(eat(TT.IDENT).value);skipNL();
+      if(cur().type===TT.COMMA){idx++;skipNL();}
+    }
+    eat(TT.RPAREN);
+    return{type:'Fn',name,params,body:parseBlock(),line:p.line};
+  }
+  function parseBlock(){
+    eat(TT.LBRACE);const stmts=[];
+    while(true){skipNL();if(check(TT.RBRACE)||cur().type===TT.EOF)break;stmts.push(parseStmt());}
+    eat(TT.RBRACE);return stmts;
+  }
+  function parseIf(){
+    const p=cur();idx++;
+    const cond=parseExpr(),then=parseBlock();
+    let elseB=null;skipNL();
+    if(cur().type===TT.KW_ELSE){idx++;skipNL();elseB=parseBlock();}
+    return{type:'If',cond,then,else:elseB,line:p.line};
+  }
+  function parseWhile(){
+    const p=cur();idx++;
+    return{type:'While',cond:parseExpr(),body:parseBlock(),line:p.line};
+  }
+  function parseReturn(){
+    const p=cur();idx++;skipNL();
+    if(check(TT.RBRACE)||check(TT.NEWLINE)||cur().type===TT.EOF)
+      return{type:'Return',value:null,line:p.line};
+    return{type:'Return',value:parseExpr(),line:p.line};
+  }
+  function parseImport(){const p=cur();idx++;return{type:'Import',name:eat(TT.IDENT).value,line:p.line};}
+  function parsePrint(){
+    const p=cur();idx++;eat(TT.LPAREN);
+    const val=parseExpr();eat(TT.RPAREN);
+    return{type:'Print',value:val,line:p.line};
+  }
+  function parseExprOrAssign(){
+    const expr=parseExpr();skipNL();
+    if(cur().type===TT.ASSIGN){idx++;const rhs=parseExpr();return{type:'Assign',target:expr,value:rhs,line:expr.line||0};}
+    return{type:'ExprStmt',expr,line:expr.line||0};
+  }
+  function parseExpr(){return parseOr();}
+  function parseOr(){let l=parseAnd();while(cur().type===TT.OR){idx++;l={type:'BinOp',op:'||',left:l,right:parseAnd()};}return l;}
+  function parseAnd(){let l=parseEq();while(cur().type===TT.AND){idx++;l={type:'BinOp',op:'&&',left:l,right:parseEq()};}return l;}
+  function parseEq(){let l=parseRel();while([TT.EQ,TT.NEQ].includes(cur().type)){const op=cur().type;idx++;l={type:'BinOp',op,left:l,right:parseRel()};}return l;}
+  function parseRel(){let l=parseAdd();while([TT.LT,TT.LTE,TT.GT,TT.GTE].includes(cur().type)){const op=cur().type;idx++;l={type:'BinOp',op,left:l,right:parseAdd()};}return l;}
+  function parseAdd(){let l=parseMul();while([TT.PLUS,TT.MINUS].includes(cur().type)){const op=cur().type;idx++;l={type:'BinOp',op,left:l,right:parseMul()};}return l;}
+  function parseMul(){let l=parseUnary();while([TT.STAR,TT.SLASH,TT.PERCENT].includes(cur().type)){const op=cur().type;idx++;l={type:'BinOp',op,left:l,right:parseUnary()};}return l;}
+  function parseUnary(){
+    if(cur().type===TT.BANG){idx++;return{type:'Unary',op:'!',expr:parseUnary()};}
+    if(cur().type===TT.MINUS){idx++;return{type:'Unary',op:'-',expr:parseUnary()};}
+    return parseCall();
+  }
+  function parseCall(){
+    let expr=parsePrimary();
+    while(true){
+      if(cur().type===TT.DOT){
+        idx++;const prop=eat(TT.IDENT).value;
+        if(cur().type===TT.LPAREN){idx++;const args=parseArgList();eat(TT.RPAREN);expr={type:'MethodCall',obj:expr,method:prop,args};}
+        else expr={type:'Member',obj:expr,prop};
+      } else if(cur().type===TT.LPAREN&&expr.type==='Ident'){
+        idx++;const args=parseArgList();eat(TT.RPAREN);
+        expr={type:'Call',callee:expr.name,args,line:expr.line};
+      } else break;
+    }
+    return expr;
+  }
+  function parseArgList(){
+    const args=[];skipNL();
+    while(!check(TT.RPAREN)&&cur().type!==TT.EOF){
+      args.push(parseExpr());skipNL();
+      if(cur().type===TT.COMMA){idx++;skipNL();}
+    }
+    return args;
+  }
+  function parsePrimary(){
+    skipNL();const t=cur();
+    if(t.type===TT.NUM){idx++;return{type:'Lit',value:t.value,kind:'int'};}
+    if(t.type===TT.FLOAT){idx++;return{type:'Lit',value:t.value,kind:'float'};}
+    if(t.type===TT.STR){idx++;return{type:'Lit',value:t.value,kind:'str'};}
+    if(t.type===TT.BOOL){idx++;return{type:'Lit',value:t.value,kind:'bool'};}
+    if(t.type===TT.NONE){idx++;return{type:'Lit',value:null,kind:'none'};}
+    if(t.type===TT.IDENT){idx++;return{type:'Ident',name:t.value,line:t.line};}
+    if(t.type===TT.LPAREN){idx++;const e=parseExpr();eat(TT.RPAREN);return e;}
+    throw new ParseError(`unexpected '${t.raw||t.value||t.type}'`,t.line,t.col);
+  }
+  return parseProgram();
+}
+
+/* ═══════════════ INTERPRETER (async, input-capable) ═══════════════ */
+class RuntimeError extends Error{constructor(m,l){super(m);this.line=l;}}
+class ReturnSignal{constructor(v){this.value=v;}}
+
+const NATIVE_PKGS={
+  mathplus:{
+    add:(a,b)=>{
+      if(typeof a!=='number'||typeof b!=='number')throw new RuntimeError('mathplus.add: expected two numbers');
+      return(Number.isInteger(a)&&Number.isInteger(b))?(a+b)|0:a+b;
+    },
+    mul:(a,b)=>{
+      if(typeof a!=='number'||typeof b!=='number')throw new RuntimeError('mathplus.mul: expected two numbers');
+      return(Number.isInteger(a)&&Number.isInteger(b))?(a*b)|0:a*b;
+    },
+  }
+};
+
+// inputCallback is set by the UI when the interpreter hits input()
+let inputResolve=null;
+
+async function interpret(ast,printFn,inputFn){
+  const globals={vars:{},mut:{},fns:{}};
+  const packages={};
+
+  for(const stmt of ast.body){
+    if(stmt.type==='Fn') globals.fns[stmt.name]=stmt;
+    else if(stmt.type==='Import'){
+      if(!NATIVE_PKGS[stmt.name])throw new RuntimeError(`unknown package '${stmt.name}' (only 'mathplus' available in playground)`,stmt.line);
+      packages[stmt.name]=NATIVE_PKGS[stmt.name];
+    } else if(stmt.type==='Let'){
+      globals.vars[stmt.name]=await evalExpr(stmt.value,globals);
+      globals.mut[stmt.name]=stmt.mutable;
+    }
+  }
+
+  if(globals.fns['main']) await callFn(globals.fns['main'],[],globals);
+  else for(const stmt of ast.body) if(stmt.type!=='Fn'&&stmt.type!=='Import'&&stmt.type!=='Let') await execStmt(stmt,globals);
+
+  async function execStmt(stmt,env){
+    if(stmt.type==='Let'){
+      const v=await evalExpr(stmt.value,env);
+      env.vars[stmt.name]=v;env.mut[stmt.name]=stmt.mutable;
+    } else if(stmt.type==='Assign'){
+      if(stmt.target.type==='Ident'){
+        const name=stmt.target.name,e=findEnv(name,env);
+        if(!e)throw new RuntimeError(`undefined variable '${name}'`,stmt.line);
+        if(!e.mut[name])throw new RuntimeError(`cannot assign to immutable variable '${name}'`,stmt.line);
+        e.vars[name]=await evalExpr(stmt.value,env);
+      } else throw new RuntimeError('unsupported assignment target',stmt.line);
+    } else if(stmt.type==='ExprStmt'){
+      await evalExpr(stmt.expr,env);
+    } else if(stmt.type==='Print'){
+      printFn(cherryStr(await evalExpr(stmt.value,env)));
+    } else if(stmt.type==='If'){
+      const cond=await evalExpr(stmt.cond,env);
+      if(cond){const r=await execBlock(stmt.then,env);if(r instanceof ReturnSignal)return r;}
+      else if(stmt.else){const r=await execBlock(stmt.else,env);if(r instanceof ReturnSignal)return r;}
+    } else if(stmt.type==='While'){
+      let iters=0;
+      while(await evalExpr(stmt.cond,env)){
+        if(++iters>10000)throw new RuntimeError('loop limit exceeded (10000 iterations)',stmt.line);
+        const r=await execBlock(stmt.body,env);
+        if(r instanceof ReturnSignal)return r;
+      }
+    } else if(stmt.type==='Return'){
+      const v=stmt.value?await evalExpr(stmt.value,env):null;
+      return new ReturnSignal(v);
+    } else if(stmt.type==='Fn'){
+      env.fns=env.fns||{};env.fns[stmt.name]=stmt;
+    }
+    return null;
+  }
+
+  async function execBlock(stmts,parentEnv){
+    const env={vars:{},mut:{},fns:{},parent:parentEnv};
+    for(const s of stmts){const r=await execStmt(s,env);if(r instanceof ReturnSignal)return r;}
+    return null;
+  }
+
+  async function callFn(fn,args,callerEnv){
+    const env={vars:{},mut:{},fns:{},parent:globals};
+    for(let i=0;i<fn.params.length;i++){env.vars[fn.params[i]]=args[i]!==undefined?args[i]:null;env.mut[fn.params[i]]=true;}
+    const r=await execBlock(fn.body,env);
+    return(r instanceof ReturnSignal)?r.value:null;
+  }
+
+  function findEnv(name,env){
+    if(!env)return null;if(name in env.vars)return env;return findEnv(name,env.parent||null);
+  }
+  function findFn(name,env){
+    if(!env)return null;if(env.fns&&name in env.fns)return env.fns[name];return findFn(name,env.parent||null);
+  }
+
+  async function evalExpr(expr,env){
+    if(!expr)return null;
+    if(expr.type==='Lit')return expr.value;
+    if(expr.type==='Ident'){
+      const e=findEnv(expr.name,env);if(e)return e.vars[expr.name];
+      if(packages[expr.name])return packages[expr.name];
+      throw new RuntimeError(`undefined variable '${expr.name}'`,expr.line);
+    }
+    if(expr.type==='Member'){
+      const obj=await evalExpr(expr.obj,env);
+      if(obj&&typeof obj==='object'&&expr.prop in obj)return obj[expr.prop];
+      throw new RuntimeError(`no property '${expr.prop}'`,expr.line||0);
+    }
+    if(expr.type==='Call'){
+      // built-ins
+      if(expr.callee==='input'){
+        const prompt=expr.args.length>0?cherryStr(await evalExpr(expr.args[0],env)):null;
+        return await inputFn(prompt);
+      }
+      if(expr.callee==='input_int'){
+        const prompt=expr.args.length>0?cherryStr(await evalExpr(expr.args[0],env)):null;
+        const s=await inputFn(prompt);
+        const n=parseInt(s,10);
+        if(isNaN(n))throw new RuntimeError(`input_int: '${s}' is not an integer`,expr.line);
+        return n;
+      }
+      if(expr.callee==='input_float'){
+        const prompt=expr.args.length>0?cherryStr(await evalExpr(expr.args[0],env)):null;
+        const s=await inputFn(prompt);
+        const n=parseFloat(s);
+        if(isNaN(n))throw new RuntimeError(`input_float: '${s}' is not a number`,expr.line);
+        return n;
+      }
+      if(expr.callee==='str'){const v=await evalExpr(expr.args[0],env);return cherryStr(v);}
+      if(expr.callee==='int'){
+        const v=await evalExpr(expr.args[0],env);
+        if(typeof v==='number')return Math.trunc(v);
+        const n=parseInt(v,10);if(isNaN(n))throw new RuntimeError(`int(): cannot convert '${v}'`,expr.line);return n;
+      }
+      if(expr.callee==='float'){
+        const v=await evalExpr(expr.args[0],env);
+        if(typeof v==='number')return v;
+        const n=parseFloat(v);if(isNaN(n))throw new RuntimeError(`float(): cannot convert '${v}'`,expr.line);return n;
+      }
+      const fn=findFn(expr.callee,env)||(globals.fns&&globals.fns[expr.callee]);
+      if(!fn)throw new RuntimeError(`undefined function '${expr.callee}'`,expr.line);
+      const args=await Promise.all(expr.args.map(a=>evalExpr(a,env)));
+      return await callFn(fn,args,env);
+    }
+    if(expr.type==='MethodCall'){
+      const obj=await evalExpr(expr.obj,env);
+      if(!obj||typeof obj!=='object')throw new RuntimeError('not an object',expr.line||0);
+      const fn=obj[expr.method];
+      if(typeof fn!=='function')throw new RuntimeError(`no method '${expr.method}'`,expr.line||0);
+      const args=await Promise.all(expr.args.map(a=>evalExpr(a,env)));
+      return fn(...args);
+    }
+    if(expr.type==='Unary'){
+      const v=await evalExpr(expr.expr,env);
+      if(expr.op==='!')return!v;if(expr.op==='-')return-v;
+    }
+    if(expr.type==='BinOp'){
+      const l=await evalExpr(expr.left,env),r=await evalExpr(expr.right,env);
+      switch(expr.op){
+        case '+':return(typeof l==='string'||typeof r==='string')?cherryStr(l)+cherryStr(r):l+r;
+        case '-':return l-r;case '*':return l*r;
+        case '/':if(r===0)throw new RuntimeError('division by zero',expr.line||0);
+                 return(Number.isInteger(l)&&Number.isInteger(r))?Math.trunc(l/r):l/r;
+        case '%':return l%r;
+        case '==':return l===r;case '!=':return l!==r;
+        case '<':return l<r;case '<=':return l<=r;case '>':return l>r;case '>=':return l>=r;
+        case '&&':return l&&r;case '||':return l||r;
+      }
+    }
+    return null;
+  }
+
+  function cherryStr(v){
+    if(v===null||v===undefined)return'none';
+    if(typeof v==='boolean')return v?'true':'false';
+    if(typeof v==='object')return'[package]';
+    return String(v);
+  }
+}
+
+/* ═══════════════ UI ═══════════════ */
+const editor   = document.getElementById('cherry-editor');
+const output   = document.getElementById('cherry-output');
+const runBtn   = document.getElementById('run-btn');
+const clearBtn = document.getElementById('clear-btn');
+const inputRow = document.getElementById('input-row');
+const progInput= document.getElementById('program-input');
+const inputSub = document.getElementById('input-submit');
+
+let running = false;
+let pendingInputResolve = null;
+
+function appendOutput(text, cls){
+  // remove placeholder if present
+  const placeholder = output.querySelector('.out-muted');
+  if(placeholder) placeholder.remove();
+  const span=document.createElement('span');
+  span.className=cls;
+  span.textContent=text;
+  output.appendChild(span);
+  output.scrollTop=output.scrollHeight;
+}
+
+function printLine(text){ appendOutput(text,'out-line'); }
+function printError(text){ appendOutput(text,'out-error'); }
+function printInfo(text){ appendOutput(text,'out-info'); }
+function printEcho(text){ appendOutput('› '+text,'out-echo'); }
+function printPrompt(text){ if(text) appendOutput(text,'out-prompt'); }
+
+function showInputRow(){ inputRow.classList.remove('hidden'); progInput.value=''; progInput.focus(); }
+function hideInputRow(){ inputRow.classList.add('hidden'); }
+
+function submitInput(){
+  if(!pendingInputResolve) return;
+  const val = progInput.value;
+  printEcho(val);
+  hideInputRow();
+  const resolve = pendingInputResolve;
+  pendingInputResolve = null;
+  resolve(val);
+}
+
+inputSub.addEventListener('click', submitInput);
+progInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); submitInput(); }});
+
+// Async input function passed to interpreter
+function inputFn(prompt){
+  return new Promise(resolve => {
+    printPrompt(prompt);
+    showInputRow();
+    pendingInputResolve = resolve;
+  });
+}
+
+async function runCode(){
+  if(running) return;
+  running=true;
+  output.innerHTML='';
+  runBtn.classList.add('running');
+  runBtn.textContent='◼ Running';
+  hideInputRow();
+  pendingInputResolve=null;
+
+  try {
+    const tokens=lex(editor.value);
+    const ast=parse(tokens);
+    await interpret(ast, printLine, inputFn);
+    printInfo('— program finished —');
+  } catch(e){
+    const loc=e.line?` at line ${e.line}`:'';
+    printError(`error${loc}: ${e.message}`);
+  } finally {
+    running=false;
+    hideInputRow();
+    pendingInputResolve=null;
+    runBtn.classList.remove('running');
+    runBtn.innerHTML='▶ Run';
+  }
+}
+
+runBtn.addEventListener('click', runCode);
+clearBtn.addEventListener('click', ()=>{
+  if(running){ pendingInputResolve&&pendingInputResolve(''); running=false; hideInputRow(); }
+  output.innerHTML='<span class="out-muted">Press ▶ Run to execute your Cherry code.</span>';
+  runBtn.classList.remove('running');runBtn.innerHTML='▶ Run';
+});
+
+editor.addEventListener('keydown', e=>{
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const s=editor.selectionStart,en=editor.selectionEnd;
+    editor.value=editor.value.substring(0,s)+'    '+editor.value.substring(en);
+    editor.selectionStart=editor.selectionEnd=s+4;
+  }
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); runCode(); }
+});
+
+// Auto-resize editor
+function autoResize(){
+  editor.style.height='auto';
+  editor.style.height=Math.min(Math.max(editor.scrollHeight,160),380)+'px';
+}
+editor.addEventListener('input',autoResize);
+autoResize();
+
+// Example buttons
+document.querySelectorAll('.eg-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const code=EXAMPLES[btn.dataset.eg];
+    if(!code)return;
+    editor.value=code;
+    autoResize();
+    document.querySelectorAll('.eg-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    output.innerHTML='<span class="out-muted">Press ▶ Run to execute your Cherry code.</span>';
+    hideInputRow();
+    if(running){pendingInputResolve&&pendingInputResolve('');running=false;}
+    runBtn.classList.remove('running');runBtn.innerHTML='▶ Run';
+  });
+});
+
+// Drag-to-resize handle
+(function(){
+  const handle=document.getElementById('pg-resize');
+  if(!handle)return;
+  let dragging=false,startY=0,startH=0;
+  handle.addEventListener('mousedown',e=>{
+    dragging=true;startY=e.clientY;startH=editor.offsetHeight;
+    document.body.style.userSelect='none';
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    const h=Math.min(Math.max(startH+(e.clientY-startY),100),500);
+    editor.style.height=h+'px';
+  });
+  window.addEventListener('mouseup',()=>{dragging=false;document.body.style.userSelect='';});
+})();
+
+})();
+</script>
 </body>
 </html>
