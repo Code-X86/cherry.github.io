@@ -20,6 +20,8 @@
       --shadow: 0 30px 80px rgba(255, 47, 95, 0.12);
       --radius: 24px;
       --max: 1120px;
+      --grid-x: 0px;
+      --grid-y: 0px;
     }
 
     * {
@@ -41,6 +43,27 @@
       color: var(--text);
       line-height: 1.6;
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .dot-grid {
+      position: fixed;
+      inset: -80px;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.42;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.18) 1px, transparent 1.7px);
+      background-size: 34px 34px;
+      transform: translate3d(var(--grid-x), var(--grid-y), 0);
+      transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+      mask-image: radial-gradient(circle at center, black 0%, black 42%, transparent 78%);
+    }
+
+    header,
+    main,
+    footer {
+      position: relative;
+      z-index: 1;
     }
 
     a {
@@ -121,6 +144,12 @@
       border: none;
       background: linear-gradient(135deg, var(--cherry), var(--cherry-dark));
       box-shadow: 0 12px 36px rgba(255, 47, 95, 0.3);
+    }
+
+    .button.download {
+      background: rgba(66, 211, 146, 0.11);
+      border-color: rgba(66, 211, 146, 0.28);
+      color: #c9ffe3;
     }
 
     .hero {
@@ -439,11 +468,13 @@
   </style>
 </head>
 <body>
+  <div class="dot-grid" aria-hidden="true"></div>
+
   <header>
     <div class="container">
       <nav>
         <a class="brand" href="#top" aria-label="Cherry home">
-          <img src="assets/logo2.png" alt="Cherry Logo" />
+          <img src="assets/logo2.svg" alt="Cherry Logo" />
           <span>Cherry</span>
         </a>
 
@@ -454,7 +485,7 @@
           <a href="#status">Status</a>
         </div>
 
-        <a class="button" href="#install">Get Started</a>
+        <a class="button download" href="cherry-linux-x86_64" download>Download Linux</a>
       </nav>
     </div>
   </header>
@@ -469,7 +500,7 @@
         </p>
 
         <div class="hero-actions">
-          <a class="button primary" href="#install">Install Cherry</a>
+          <a class="button primary" href="cherry-linux-x86_64" download>Install Cherry</a>
           <a class="button" href="#example">View Example</a>
         </div>
 
@@ -491,7 +522,7 @@
 
       <div class="hero-card">
         <div class="logo-panel">
-          <img src="assets/logo2.png" alt="Cherry Logo" />
+          <img src="assets/logo2.svg" alt="Cherry Logo" />
         </div>
         <div class="code-window">
           <div class="window-bar">
@@ -710,5 +741,35 @@ cargo --version</code></pre>
       <span>Built with AI assistance and manual optimization.</span>
     </div>
   </footer>
+
+  <script>
+    const root = document.documentElement;
+    let currentX = 0;
+    let currentY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    function setTargetFromPointer(event) {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      targetX = ((event.clientX - centerX) / centerX) * 26;
+      targetY = ((event.clientY - centerY) / centerY) * 26;
+    }
+
+    function animateGrid() {
+      currentX += (targetX - currentX) * 0.035;
+      currentY += (targetY - currentY) * 0.035;
+      root.style.setProperty("--grid-x", `${currentX.toFixed(2)}px`);
+      root.style.setProperty("--grid-y", `${currentY.toFixed(2)}px`);
+      requestAnimationFrame(animateGrid);
+    }
+
+    window.addEventListener("pointermove", setTargetFromPointer, { passive: true });
+    window.addEventListener("pointerleave", () => {
+      targetX = 0;
+      targetY = 0;
+    });
+    animateGrid();
+  </script>
 </body>
 </html>
