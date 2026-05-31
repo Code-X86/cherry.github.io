@@ -447,7 +447,7 @@ h1{letter-spacing:-0.06em;}
     <div class="card">
       <div class="icon">⚡</div>
       <h3>Rust-powered core</h3>
-      <p>The interpreter and toolchain are written in Rust, but you never need Rust installed to run Cherry code.</p>
+      <p>The interpreter and toolchain are written in Rust, and Cherry now requires a local Rust toolchain to run normal commands.</p>
     </div>
     <div class="card">
       <div class="icon">📦</div>
@@ -529,7 +529,7 @@ h1{letter-spacing:-0.06em;}
     <div class="section-head" style="margin-bottom:20px;">
       <div class="label">Package system</div>
       <h2>Native <code style="font-size:inherit;">.chy</code> packages.</h2>
-      <p>Compressed archives containing metadata and platform-specific Rust modules. No compiler needed to use them.</p>
+      <p>Compressed archives containing metadata and platform-specific native modules. Cherry still requires Rust for its local toolchain checks.</p>
     </div>
     <div class="package-tree">mathplus.chy
 ├── Ident.toml
@@ -566,7 +566,7 @@ returns = <span class="str">"int"</span></code></pre>
     <div class="section-head">
       <div class="label">Getting started</div>
       <h2>Install and run.</h2>
-      <p>Cherry ships as a single standalone Linux ELF. No dependencies, no runtime required.</p>
+      <p>Cherry ships as a Linux ELF, and it requires Rust with <code>rustc</code> and <code>cargo</code> available locally.</p>
     </div>
     <div class="terminal">
       <div class="window-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
@@ -586,7 +586,7 @@ cherry doctor</code></pre>
   <div style="display:flex;flex-direction:column;gap:16px;">
     <div class="card">
       <h3>Rust requirement</h3>
-      <p style="margin-top:8px;">Rust is <em>not</em> required to run Cherry programs or use existing packages. It's only needed when building native <code>.chy</code> packages from source.</p>
+      <p style="margin-top:8px;">Rust is required to use Cherry. Cherry checks for <code>rustc</code> and <code>cargo</code> before running scripts, checking files, building projects, or installing packages.</p>
     </div>
     <div class="card">
       <h3>CLI commands</h3>
