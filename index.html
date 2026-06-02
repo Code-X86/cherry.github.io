@@ -222,23 +222,12 @@ margin:0;
 /* ── PLAYGROUND ── */
 #playground{padding:80px 0 100px;}
 .playground-shell{
-display:grid;grid-template-columns:172px 1fr;gap:16px;
+display:grid;grid-template-columns:1fr;gap:16px;
 }
 .playground-sidebar{display:flex;flex-direction:column;gap:5px;}
 .sidebar-label{
 font-size:0.72rem;font-weight:800;color:var(--muted);
 letter-spacing:0.1em;text-transform:uppercase;padding:0 10px;margin-bottom:6px;
-}
-.eg-btn{
-text-align:left;background:rgba(255,255,255,0.035);border:1px solid var(--line);
-color:var(--muted);padding:8px 12px;border-radius:10px;
-font-size:0.84rem;cursor:pointer;transition:all 0.14s;font-family:inherit;
-white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.eg-btn:hover{background:rgba(255,255,255,0.075);color:var(--text);border-color:var(--line-2);}
-.eg-btn.active{
-background:rgba(255,47,95,0.11);border-color:rgba(255,47,95,0.3);
-color:#ffbdcc;font-weight:600;
 }
 
 /* Main editor/output column */
@@ -265,6 +254,51 @@ box-shadow:0 4px 16px rgba(255,47,95,0.28);
 .run-btn:active{transform:scale(0.97);}
 .run-btn.running{background:rgba(255,209,102,0.18);box-shadow:none;color:#ffe09a;border:1px solid rgba(255,209,102,0.25);}
 .hint-text{font-size:0.73rem;color:#4a4350;font-family:var(--mono);white-space:nowrap;}
+.package-upload{
+position:relative;display:inline-flex;align-items:center;gap:6px;
+height:30px;padding:0 11px;border-radius:999px;
+background:rgba(255,255,255,0.045);border:1px solid var(--line);
+color:var(--muted);font-size:0.78rem;font-weight:700;cursor:pointer;
+transition:background 0.15s,border-color 0.15s,color 0.15s;
+}
+.package-upload:hover{background:rgba(255,255,255,0.08);border-color:var(--line-2);color:var(--text);}
+.package-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.package-status{
+font-size:0.73rem;color:#42d392;font-family:var(--mono);
+max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.package-panel{
+display:grid;grid-template-columns:minmax(0,0.9fr) minmax(0,1.1fr);gap:14px;
+padding:14px;border-bottom:1px solid var(--line);
+background:linear-gradient(180deg,rgba(255,255,255,0.025),rgba(255,255,255,0.012));
+}
+.package-drop{
+position:relative;min-height:92px;border:1px dashed rgba(255,255,255,0.16);
+border-radius:14px;background:rgba(255,255,255,0.025);
+display:flex;flex-direction:column;justify-content:center;gap:4px;padding:16px;
+cursor:pointer;transition:border-color 0.15s,background 0.15s;
+}
+.package-drop:hover{border-color:rgba(255,47,95,0.45);background:rgba(255,47,95,0.055);}
+.package-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.package-drop strong{font-size:0.92rem;color:#f7f2f5;}
+.package-drop span{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+.package-info{
+display:flex;flex-direction:column;gap:8px;min-width:0;
+font-family:var(--mono);font-size:0.78rem;color:var(--muted);
+}
+.loaded-packages{
+min-height:24px;padding:7px 9px;border-radius:10px;
+background:rgba(0,0,0,0.18);border:1px solid var(--line);
+color:#c8fae4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.package-example{
+padding:9px 10px;border-radius:10px;background:#09080e;border:1px solid var(--line);
+color:#eedde5;white-space:pre;overflow:auto;
+}
+@media (max-width:760px){
+.package-panel{grid-template-columns:1fr;}
+.package-status,.hint-text{display:none;}
+}
 
 /* Editor pane */
 .pg-editor-pane{position:relative;flex:0 0 auto;}
@@ -357,8 +391,6 @@ footer .container{display:flex;justify-content:space-between;gap:20px;flex-wrap:
 .nav-links{display:none;}
 .hero{padding-top:56px;}
 .playground-shell{grid-template-columns:1fr;}
-.playground-sidebar{flex-direction:row;flex-wrap:wrap;}
-.eg-btn{flex:0 0 auto;}
 }
 @media(max-width:560px){
 .grid{grid-template-columns:1fr;}
@@ -382,6 +414,7 @@ h1{letter-spacing:-0.06em;}
     <a href="#features">Features</a>
     <a href="#packages">Packages</a>
     <a href="#install">Install</a>
+    <a href="wiki.html">Wiki</a>
     <a href="#status">Status</a>
     <a href="#playground">Playground</a>
   </div>
@@ -418,10 +451,10 @@ h1{letter-spacing:-0.06em;}
     <div class="window-bar">
       <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
     </div>
-    <pre><code><span class="kw">import</span> mathplus
+    <pre><code><span class="kw">import</span> package
 
 <span class="kw">fn</span> <span class="fn">main</span>() {
-    <span class="kw">let</span> result = mathplus.add(<span class="num">5</span>, <span class="num">10</span>)
+    <span class="kw">let</span> result = package.add(<span class="num">5</span>, <span class="num">10</span>)
     print(result)  <span class="cm"># 15</span>
 }</code></pre>
   </div>
@@ -475,8 +508,8 @@ h1{letter-spacing:-0.06em;}
 
 <div class="section-divider"></div>
 
-<!-- EXAMPLE -->
-<section id="example">
+<!-- SYNTAX -->
+<section id="syntax">
 <div class="container split">
   <div>
     <div class="section-head">
@@ -531,19 +564,19 @@ h1{letter-spacing:-0.06em;}
       <h2>Native <code style="font-size:inherit;">.chy</code> packages.</h2>
       <p>Compressed archives containing metadata and platform-specific native modules. Cherry still requires Rust for its local toolchain checks.</p>
     </div>
-    <div class="package-tree">mathplus.chy
+    <div class="package-tree">package.chy
 ├── Ident.toml
 ├── README.md
 └── bin/
     └── linux-x86_64/
-        └── libmathplus.so</div>
+        └── libpackage.so</div>
   </div>
   <div class="terminal">
     <div class="window-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
     <pre><code>[[targets]]
 os = <span class="str">"linux"</span>
 arch = <span class="str">"x86_64"</span>
-file = <span class="str">"bin/linux-x86_64/libmathplus.so"</span>
+file = <span class="str">"bin/linux-x86_64/libpackage.so"</span>
 sha256 = <span class="str">"a3f8..."</span>
 
 [api.add]
@@ -645,34 +678,39 @@ cherry doctor</code></pre>
   <div class="section-head">
     <div class="label">Interactive</div>
     <h2>Try Cherry in your browser.</h2>
-    <p>A complete Cherry emulator — variables, functions, loops, recursion, math, and <code>input()</code> support. Pick an example or write your own. <kbd style="font-size:0.78rem;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.07);border:1px solid var(--line);font-family:var(--mono);">Ctrl+Enter</kbd> to run.</p>
+    <p>A complete Cherry emulator — variables, functions, loops, recursion, math, <code>input()</code>, and uploadable emulator packages. Write code directly in the editor. <kbd style="font-size:0.78rem;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.07);border:1px solid var(--line);font-family:var(--mono);">Ctrl+Enter</kbd> to run.</p>
   </div>
   <div class="playground-shell">
-    <!-- Sidebar -->
-    <div class="playground-sidebar">
-      <p class="sidebar-label">Examples</p>
-      <button class="eg-btn" data-eg="hello">Hello World</button>
-      <button class="eg-btn" data-eg="input">User input</button>
-      <button class="eg-btn" data-eg="calc">Calculator</button>
-      <button class="eg-btn" data-eg="vars">Variables</button>
-      <button class="eg-btn" data-eg="fn">Functions</button>
-      <button class="eg-btn" data-eg="loop">While loop</button>
-      <button class="eg-btn" data-eg="factorial">Factorial</button>
-      <button class="eg-btn" data-eg="fizzbuzz">FizzBuzz</button>
-      <button class="eg-btn" data-eg="fibonacci">Fibonacci</button>
-      <button class="eg-btn" data-eg="guess">Guess game</button>
-      <button class="eg-btn" data-eg="mathpkg">mathplus pkg</button>
-      <button class="eg-btn" data-eg="bool">Booleans</button>
-    </div>
-
-    <!-- Editor + Output -->
     <div class="playground-main">
       <!-- Toolbar -->
       <div class="pg-toolbar">
         <div class="pg-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
         <span class="pg-filename">main.ch</span>
+        <label class="package-upload">
+          upload package
+          <input id="package-upload" type="file" accept=".chy,.js" />
+        </label>
+        <span class="package-status" id="package-status"></span>
         <span class="hint-text">Ctrl+Enter to run</span>
         <button class="run-btn" id="run-btn">▶ Run</button>
+      </div>
+
+      <div class="package-panel">
+        <label class="package-drop">
+          <input id="package-upload-panel" type="file" accept=".chy,.js" />
+          <strong>Upload emulator package</strong>
+          <span>Use a `.chy` archive with `Ident.toml` and `emulator/package.js`, or upload a standalone package `.js` file.</span>
+          <span>Sample package: <a href="../packages/webview.chy" download>webview.chy</a></span>
+        </label>
+        <div class="package-info">
+          <div>Loaded packages</div>
+          <div class="loaded-packages" id="loaded-packages">none</div>
+          <div class="package-example">import webview
+
+fn main() {
+    webview.openHtml("&lt;h1&gt;Hello&lt;/h1&gt;")
+}</div>
+        </div>
       </div>
 
       <!-- Editor -->
@@ -717,6 +755,7 @@ cherry doctor</code></pre>
   <div class="footer-links">
     <a href="#features">Features</a>
     <a href="#install">Install</a>
+    <a href="wiki.html">Wiki</a>
     <a href="#playground">Playground</a>
   </div>
   <span class="footer-note">Rust-powered hobby language · Built with AI assistance</span>

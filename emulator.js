@@ -436,12 +436,138 @@
     return program();
   }
 
-  const nativePackages = {
-    mathplus: {
-      add: (a, b) => assertNumberPair('mathplus.add', a, b, () => a + b),
-      mul: (a, b) => assertNumberPair('mathplus.mul', a, b, () => a * b),
-    },
-  };
+  const nativePackages = {};
+
+  function registerPackage(name, module) {
+    if (!name || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+      throw new CherryEmulatorError(`invalid emulator package name '${name || ''}'`);
+    }
+    nativePackages[name] = module;
+    return nativePackages[name];
+  }
+
+  function createPackage(name, io) {
+    const module = nativePackages[name];
+    if (!module) return null;
+    const api = {
+      print: io.print || (() => {}),
+      input: io.input || (async () => ''),
+      now: () => Date.now() / 1000,
+    };
+    return typeof module === 'function' ? module(api) : module;
+  }
+
+  async function loadPackageArchive(file) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (file.name.endsWith('.js')) {
+      const source = new TextDecoder().decode(bytes);
+      const name = file.name.replace(/\.js$/i, '').replace(/[^A-Za-z0-9_]/g, '_');
+      registerPackage(name, evalPackageModule(source, name));
+      return { name, files: [file.name] };
+    }
+
+    const entries = await unzip(bytes);
+    const identText = entries['Ident.toml'];
+    if (!identText) throw new CherryEmulatorError('package is missing Ident.toml');
+    const name = parseIdentName(identText);
+    const source = entries['emulator/package.js'] || entries['emulator/index.js'];
+    if (!source) {
+      throw new CherryEmulatorError("package has no emulator module; add 'emulator/package.js'");
+    }
+    registerPackage(name, evalPackageModule(source, name));
+    return { name, files: Object.keys(entries).sort() };
+  }
+
+  function parseIdentName(text) {
+    const match = text.match(/^\s*name\s*=\s*"([^"]+)"/m);
+    if (!match) throw new CherryEmulatorError('Ident.toml is missing name');
+    return match[1];
+  }
+
+  function evalPackageModule(source, name) {
+    try {
+      const fn = new Function(
+        'api',
+        `${source}\n; if (typeof package !== "undefined") return package; if (typeof createPackage !== "undefined") return createPackage(api); return null;`
+      );
+      const module = fn({
+        print: () => {},
+        input: async () => '',
+        now: () => Date.now() / 1000,
+      });
+      if (typeof module === 'function') return module;
+      if (module && typeof module === 'object') return () => module;
+      throw new CherryEmulatorError(`emulator package '${name}' did not define package`);
+    } catch (error) {
+      if (error instanceof CherryEmulatorError) throw error;
+      throw new CherryEmulatorError(`could not load emulator package '${name}': ${error.message}`);
+    }
+  }
+
+  async function unzip(bytes) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const eocdOffset = findEndOfCentralDirectory(view);
+    if (eocdOffset < 0) throw new CherryEmulatorError('invalid .chy zip archive');
+    const entryCount = view.getUint16(eocdOffset + 10, true);
+    let offset = view.getUint32(eocdOffset + 16, true);
+    const entries = {};
+
+    for (let i = 0; i < entryCount; i += 1) {
+      if (view.getUint32(offset, true) !== 0x02014b50) {
+        throw new CherryEmulatorError('invalid zip central directory');
+      }
+      const method = view.getUint16(offset + 10, true);
+      const compressedSize = view.getUint32(offset + 20, true);
+      const uncompressedSize = view.getUint32(offset + 24, true);
+      const nameLength = view.getUint16(offset + 28, true);
+      const extraLength = view.getUint16(offset + 30, true);
+      const commentLength = view.getUint16(offset + 32, true);
+      const localOffset = view.getUint32(offset + 42, true);
+      const name = decodeBytes(bytes.slice(offset + 46, offset + 46 + nameLength));
+      offset += 46 + nameLength + extraLength + commentLength;
+      if (name.endsWith('/')) continue;
+
+      const data = await readZipEntry(view, bytes, localOffset, method, compressedSize, uncompressedSize);
+      entries[name] = decodeBytes(data);
+    }
+    return entries;
+  }
+
+  function findEndOfCentralDirectory(view) {
+    const min = Math.max(0, view.byteLength - 65557);
+    for (let offset = view.byteLength - 22; offset >= min; offset -= 1) {
+      if (view.getUint32(offset, true) === 0x06054b50) return offset;
+    }
+    return -1;
+  }
+
+  async function readZipEntry(view, bytes, offset, method, compressedSize, uncompressedSize) {
+    if (view.getUint32(offset, true) !== 0x04034b50) {
+      throw new CherryEmulatorError('invalid zip local file header');
+    }
+    const nameLength = view.getUint16(offset + 26, true);
+    const extraLength = view.getUint16(offset + 28, true);
+    const dataStart = offset + 30 + nameLength + extraLength;
+    const compressed = bytes.slice(dataStart, dataStart + compressedSize);
+    if (method === 0) return compressed;
+    if (method === 8) {
+      if (typeof DecompressionStream !== 'function') {
+        throw new CherryEmulatorError('this browser cannot inflate compressed .chy files');
+      }
+      const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      const data = new Uint8Array(await new Response(stream).arrayBuffer());
+      if (uncompressedSize && data.length !== uncompressedSize) {
+        throw new CherryEmulatorError('zip entry size mismatch');
+      }
+      return data;
+    }
+    throw new CherryEmulatorError(`unsupported zip compression method ${method}`);
+  }
+
+  function decodeBytes(bytes) {
+    return new TextDecoder().decode(bytes);
+  }
+
 
   function assertNumberPair(name, a, b, op) {
     if (typeof a !== 'number' || typeof b !== 'number') throw new CherryEmulatorError(`${name}: expected two numbers`);
@@ -458,8 +584,9 @@
     for (const stmt of ast.body) {
       if (stmt.type === 'Fn') globals.fns[stmt.name] = stmt;
       else if (stmt.type === 'Import') {
-        if (!nativePackages[stmt.name]) throw new CherryEmulatorError(`unknown package '${stmt.name}'`, stmt.line, stmt.column);
-        packages[stmt.name] = nativePackages[stmt.name];
+        const module = createPackage(stmt.name, io);
+        if (!module) throw new CherryEmulatorError(`unknown package '${stmt.name}'`, stmt.line, stmt.column);
+        packages[stmt.name] = module;
       } else if (stmt.type === 'Let') {
         globals.vars[stmt.name] = await evalExpr(stmt.value, globals);
         globals.mutable[stmt.name] = stmt.mutable;
@@ -645,5 +772,19 @@
     return await interpret(ast, io);
   }
 
-  global.CherryEmulator = { lex, parse, interpret, run, CherryEmulatorError };
+  registerPackage('emulator', () => ({
+    packages() {
+      return Object.keys(nativePackages).sort().join(', ');
+    },
+  }));
+
+  global.CherryEmulator = {
+    lex,
+    parse,
+    interpret,
+    run,
+    registerPackage,
+    loadPackageArchive,
+    CherryEmulatorError,
+  };
 })(window);

@@ -1,21 +1,6 @@
 (function () {
   'use strict';
 
-  const EXAMPLES = {
-    hello: `fn main() {\n    let name = "Cherry"\n    print("Hello from " + name)\n}`,
-    input: `fn main() {\n    print("What is your name?")\n    let name = input()\n    print("Hello, " + name + "!")\n    print("Nice to meet you.")\n}`,
-    calc: `fn main() {\n    print("Enter first number:")\n    let a = input_int()\n    print("Enter second number:")\n    let b = input_int()\n    print("Sum:     " + (a + b))\n    print("Product: " + (a * b))\n    print("Diff:    " + (a - b))\n}`,
-    vars: `let count = 10\nlet ratio = 2.5\nlet enabled = true\nlet msg = "Cherry"\n\nfn main() {\n    print(count)\n    print(ratio)\n    print(enabled)\n    print(msg)\n    let mut x = 1\n    x = x + 99\n    print(x)\n}`,
-    fn: `fn add(a, b) {\n    return a + b\n}\n\nfn greet(name) {\n    return "Hello, " + name + "!"\n}\n\nfn square(n) {\n    return n * n\n}\n\nfn main() {\n    print(add(7, 8))\n    print(greet("world"))\n    print(square(9))\n}`,
-    loop: `fn main() {\n    let mut i = 1\n    while i <= 5 {\n        print(i)\n        i = i + 1\n    }\n    print("done")\n}`,
-    factorial: `fn factorial(n) {\n    if n <= 1 {\n        return 1\n    }\n    return n * factorial(n - 1)\n}\n\nfn main() {\n    print(factorial(5))\n    print(factorial(10))\n    print(factorial(12))\n}`,
-    fizzbuzz: `fn main() {\n    let mut i = 1\n    while i <= 20 {\n        if i % 15 == 0 {\n            print("FizzBuzz")\n        } else {\n            if i % 3 == 0 {\n                print("Fizz")\n            } else {\n                if i % 5 == 0 {\n                    print("Buzz")\n                } else {\n                    print(i)\n                }\n            }\n        }\n        i = i + 1\n    }\n}`,
-    fibonacci: `fn fib(n) {\n    if n <= 1 {\n        return n\n    }\n    return fib(n - 1) + fib(n - 2)\n}\n\nfn main() {\n    let mut i = 0\n    while i < 12 {\n        print(fib(i))\n        i = i + 1\n    }\n}`,
-    guess: `fn main() {\n    let secret = 42\n    print("I'm thinking of a number between 1 and 100.")\n    print("Enter your guess:")\n    let guess = input_int()\n    if guess == secret {\n        print("Correct! You got it!")\n    } else {\n        if guess < secret {\n            print("Too low! The answer was " + secret)\n        } else {\n            print("Too high! The answer was " + secret)\n        }\n    }\n}`,
-    mathpkg: `import mathplus\n\nfn main() {\n    let a = mathplus.add(5, 10)\n    let b = mathplus.mul(6, 7)\n    print("5 + 10 = " + a)\n    print("6 * 7  = " + b)\n    print("100 + 200 = " + mathplus.add(100, 200))\n}`,
-    bool: `fn main() {\n    let ready = true\n    let enabled = false\n    print(ready && enabled)\n    print(ready || enabled)\n    print(!ready)\n    print(!enabled)\n    if ready && !enabled {\n        print("ready but not enabled")\n    }\n}`,
-  };
-
   function setupDotGrid() {
     const canvas = document.getElementById('dot-grid');
     if (!canvas) return;
@@ -93,10 +78,15 @@
     const inputRow = document.getElementById('input-row');
     const programInput = document.getElementById('program-input');
     const inputSubmit = document.getElementById('input-submit');
+    const packageUpload = document.getElementById('package-upload');
+    const packageUploadPanel = document.getElementById('package-upload-panel');
+    const packageStatus = document.getElementById('package-status');
+    const loadedPackages = document.getElementById('loaded-packages');
     if (!editor || !output || !runBtn || !clearBtn || !inputRow || !programInput || !inputSubmit) return;
 
     let running = false;
     let pendingInputResolve = null;
+    const packageNames = [];
 
     function appendOutput(text, cls) {
       const placeholder = output.querySelector('.out-muted');
@@ -143,6 +133,26 @@
       });
     }
 
+    async function uploadPackage(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        if (!window.CherryEmulator || !window.CherryEmulator.loadPackageArchive) {
+          throw new Error('Cherry emulator package loader is not available');
+        }
+        const result = await window.CherryEmulator.loadPackageArchive(file);
+        if (!packageNames.includes(result.name)) packageNames.push(result.name);
+        if (packageStatus) packageStatus.textContent = `loaded ${result.name}`;
+        if (loadedPackages) loadedPackages.textContent = packageNames.join(', ');
+        printInfo(`package loaded: ${result.name}`);
+      } catch (error) {
+        if (packageStatus) packageStatus.textContent = 'package failed';
+        printError(`package error: ${error.message}`);
+      } finally {
+        event.target.value = '';
+      }
+    }
+
     async function runCode() {
       if (running) return;
       running = true;
@@ -183,6 +193,8 @@
     }
 
     inputSubmit.addEventListener('click', submitInput);
+    if (packageUpload) packageUpload.addEventListener('change', uploadPackage);
+    if (packageUploadPanel) packageUploadPanel.addEventListener('change', uploadPackage);
     programInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -205,18 +217,6 @@
       }
     });
     editor.addEventListener('input', autoResize);
-
-    document.querySelectorAll('.eg-btn').forEach((button) => {
-      button.addEventListener('click', () => {
-        const code = EXAMPLES[button.dataset.eg];
-        if (!code) return;
-        editor.value = code;
-        autoResize();
-        document.querySelectorAll('.eg-btn').forEach((other) => other.classList.remove('active'));
-        button.classList.add('active');
-        resetOutput();
-      });
-    });
 
     const handle = document.getElementById('pg-resize');
     if (handle) {
